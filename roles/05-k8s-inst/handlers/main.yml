@@ -1,0 +1,9 @@
+---
+# handlers file for 05-prep-inst
+
+- name: reboot_system
+  become: yes
+  reboot:
+    msg: "Rebooting the system because required packages were installed."
+    reboot_timeout: 3000
+  

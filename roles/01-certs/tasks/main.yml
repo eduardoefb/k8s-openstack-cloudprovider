@@ -1,0 +1,65 @@
+---
+# tasks file for 01-certs
+  - include_vars: "{{ playbook_dir }}/vars.yml" 
+    
+  - name: Clear certificate directory
+    file:
+      path: "{{ playbook_dir }}/certs"
+      state: absent
+
+  - name: Create certificate directory
+    file:
+      path: "{{ playbook_dir }}/certs"
+      state: directory
+      mode: '0700'    
+
+  - name: Create the ca certificate
+    shell: |        
+      cd {{ playbook_dir }}/certs
+      openssl genrsa -out regca.key 2048
+      openssl req -x509 -new -nodes -key regca.key -sha256 -days 3650 -out regca.crt -subj "/{{ c }}/CN=regca.{{ domain }}"
+
+  - name: Create the host certificates
+    shell: |        
+      cd {{ playbook_dir }}/certs
+
+      
+      openssl genrsa -out {{ item.name }}.{{ domain }}.key 2048
+      
+      openssl req -new -key {{ item.name }}.{{ domain }}.key \
+        -out {{ item.name }}.{{ domain }}.csr \
+        -subj "/{{ c }}/CN={{ item.name }}.{{ domain }}"  \
+        -addext "subjectAltName = DNS: {{ c }}"
+      
+      openssl x509 \
+        -extfile <(printf "[SAN]\nsubjectAltName=DNS: {{ item.name }}.{{ domain }}") \
+        -extensions SAN -req -in {{ item.name }}.{{ domain }}.csr \
+        -CA regca.crt -CAkey regca.key -CAcreateserial \
+        -out {{ item.name }}.{{ domain }}.crt -days 8650 -sha256     
+    loop:
+      "{{ all }}"
+
+    
+  - name: Create the nfs and registry certificates
+    shell: |        
+      cd {{ playbook_dir }}/certs
+      openssl genrsa -out {{ item }}.{{ domain }}.key 2048
+      
+      openssl req -new -key {{ item }}.{{ domain }}.key \
+        -out {{ item }}.{{ domain }}.csr \
+        -subj "/{{ c }}/CN={{ item }}.{{ domain }}"  \
+        -addext "subjectAltName = DNS: {{ c }}"
+      
+      openssl x509 \
+        -extfile <(printf "[SAN]\nsubjectAltName=DNS: {{ item }}.{{ domain }}") \
+        -extensions SAN -req -in {{ item }}.{{ domain }}.csr \
+        -CA regca.crt -CAkey regca.key -CAcreateserial \
+        -out {{ item }}.{{ domain }}.crt -days 8650 -sha256       
+
+    loop:
+      - registry
+      - nfs
+
+
+
+      

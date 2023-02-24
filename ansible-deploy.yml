@@ -1,0 +1,91 @@
+- hosts: localhost
+  roles:
+    - role: 01-certs
+
+- hosts: localhost
+  tasks:
+    - include_vars: "{{ playbook_dir }}/vars.yml"
+    - name: Wait for connection
+      wait_for:
+        host: "{{ item }}"
+        port: 22
+        timeout: 3000
+      loop:
+        "{{ all_external }}"
+
+- hosts: ALL
+  user: debian
+  become: true
+  roles:
+    - role: 02-update 
+
+- hosts: REGISTRY
+  user: debian
+  become: true
+  roles:
+    - role: 03-docker
+
+- hosts: NFS
+  user: debian
+  become: true
+  roles:
+    - role: 04-nfs     
+
+- hosts: BASTIAN
+  user: debian  
+  roles:
+    - role: 05-k8s-inst  
+
+
+- hosts: localhost
+  tasks:
+    - name: Clear file
+      file:
+        path: "{{ playbook_dir }}/files"
+        state: absent
+
+    - name: Clear file
+      file:
+        path: "{{ playbook_dir }}/files"
+        state: directory
+
+- hosts: MASTER
+  user: debian
+  run_once: yes
+  become: yes
+  tasks:
+    - name: Get kubenconfig
+      fetch:
+        src: /root/.kube/config
+        dest: "{{ playbook_dir }}/files/kubeconfig"
+        flat: yes
+
+- hosts: BASTIAN
+  user: debian
+  tasks:
+    - name: Clear kubeconfig
+      file:
+        path: /home/debian/.kube/
+        state: absent
+
+    - name: Create kubeconfig directory
+      file:
+        path: /home/debian/.kube/
+        state: directory
+        owner: debian
+        group: debian
+        mode: '0700'
+
+    - name: Send kubeconfig to bastian
+      copy:
+        src: "{{ playbook_dir }}/files/kubeconfig"        
+        dest: /home/debian/.kube/config
+        owner: debian
+        group: debian
+        mode: '0700'
+
+- hosts: BASTIAN
+  user: debian
+  roles:
+    - role: 06-ingress
+    - role: 07-cloud-controller-manager

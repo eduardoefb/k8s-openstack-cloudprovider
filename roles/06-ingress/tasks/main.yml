@@ -1,0 +1,71 @@
+---
+# tasks file for 06-ingress
+# Reference: https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/octavia-ingress-controller/using-octavia-ingress-controller.md
+  - include_vars: "{{ playbook_dir }}/vars.yml"  
+
+  - name: Create octavia-ingress-controller service-account and clusterrolebinding
+    shell: |
+      cat << EOF | kubectl apply -f -
+      ---
+      kind: ServiceAccount
+      apiVersion: v1
+      metadata:
+        name: octavia-ingress-controller
+        namespace: kube-system
+      ---
+      kind: ClusterRoleBinding
+      apiVersion: rbac.authorization.k8s.io/v1
+      metadata:
+        name: octavia-ingress-controller
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: cluster-admin
+      subjects:
+        - kind: ServiceAccount
+          name: octavia-ingress-controller
+          namespace: kube-system
+      EOF
+
+  - name: Create ooctavia-ingress-controller-config configmap
+    shell: |
+      cat << EOF | kubectl apply -f -
+      ---
+      kind: ConfigMap
+      apiVersion: v1
+      metadata:
+        name: octavia-ingress-controller-config
+        namespace: kube-system
+      data:
+        config: |
+          cluster-name: openstack
+          openstack:
+            auth-url: {{ openstack.auth_url }}
+            domain-name: {{ openstack.domain_name }}
+            username: {{ openstack.username }}
+            password: {{ openstack.password }}
+            project-id: {{ openstack.project_id }}
+            region: {{ openstack.region }}
+            ca-file: /etc/octavia/cafile.crt
+          octavia:
+            subnet-id: {{ internal_subnet_id }}
+            floating-network-id: {{ floating_network_id }}
+      EOF
+
+  - name: Delete openstack cacert secret if exists
+    ignore_errors: yes
+    shell: kubectl -n kube-system delete secret openstack-ca
+
+  - name: Create openstack  cacert secret
+    shell: kubectl -n kube-system create secret generic openstack-ca --from-file=/etc/ssl/certs/openstack.pem
+
+  - name: Create octavia-ingress-controller statefulset template
+    template:
+      src: statefulset.yml.j2
+      dest: /tmp/statefulset.yml
+
+  - name: Create octavia-ingress-controller statefulset 
+    shell: kubectl apply -f /tmp/statefulset.yml  
+
+  - name: Restart octavia-ingress-controller statefulset 
+    shell: kubectl -n kube-system rollout restart statefulset octavia-ingress-controller     

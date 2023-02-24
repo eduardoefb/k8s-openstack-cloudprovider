@@ -1,0 +1,13 @@
+[Global]
+auth-url={{ openstack.auth_url }}
+username={{ openstack.username }}
+password={{ openstack.password }}
+region={{ openstack.region }}
+domain-name={{ openstack.domain_name }}
+project-id={{ openstack.project_id }}
+tenant-id={{ openstack.project_id }}
+ca-file=/etc/ssl/certs/openstack.crt
+
+[LoadBalancer]
+subnet-id={{ internal_subnet_id }}
+floating-network-id={{ floating_network_id }}

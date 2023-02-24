@@ -1,0 +1,17 @@
+#!/bin/bash 
+chown -R debian:debian {{ home_dir.stdout }}/deployment
+
+# Update Ansible inventory file with inventory builder
+cd {{ home_dir.stdout }}/deployment/kubespray
+unset IPS
+ {% for m in master %}
+      IPS+=({{ m.ip }})
+ {% endfor %}
+
+ {% for m in worker %}
+      IPS+=({{ m.ip }})
+ {% endfor %} 
+
+ declare -a IPS
+      
+ CONFIG_FILE=inventory/mycluster/hosts.yaml python3 contrib/inventory_builder/inventory.py ${IPS[@]}

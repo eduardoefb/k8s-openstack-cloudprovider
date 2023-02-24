@@ -1,0 +1,152 @@
+---
+# tasks file for 03-docker
+  - include_vars: "{{ playbook_dir }}/vars.yml"  
+  - name: Install packages
+    apt:
+        pkg: 
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: latest
+    register: apt_res
+    retries: 300
+    delay: 10
+    until: apt_res is success  
+
+  - name: Remove Docker's installation
+    apt:
+      pkg:
+        - docker
+        - docker-engine 
+        - docker.io 
+        - containerd 
+        - runc 
+      state: absent
+    register: apt_res
+    retries: 300
+    delay: 10
+    until: apt_res is success        
+
+  - name: Remove Docker official GPG key
+    file:
+      path: /etc/apt/keyrings/docker.gpg
+      state: absent
+
+  - name: Add Docker official GPG key
+    shell: |
+      mkdir -m 0755 -p /etc/apt/keyrings        
+      curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    register: apt_res
+    retries: 300
+    delay: 10
+    until: apt_res is success        
+  
+  - name: Set up the repository
+    shell: |
+      echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+        $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null      
+
+  - name: Update 
+    apt:
+      name: '*'
+      state: 'latest'
+      update_cache: yes
+    register: apt_res
+    retries: 300
+    delay: 10
+    until: apt_res is success  
+
+  - name: Install Docker Engine, containerd, and Docker Compose
+    apt:
+        pkg: 
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: latest
+    register: apt_res
+    retries: 300
+    delay: 10
+    until: apt_res is success    
+
+  - name: Add privilegies to user
+    user: 
+      name: debian
+      groups: docker
+      append: yes  
+  
+  - name: Clear directory
+    file:
+      path: /opt/docker_certs
+      state: absent
+
+  - name: Create directory
+    file:
+      path: /opt/docker_certs
+      state: directory
+      owner: root
+      group: root
+      mode: '0700'
+
+  - name: Copy files
+    copy:
+      src: "{{ playbook_dir }}/certs/{{ item }}" 
+      dest: "/opt/docker_certs/{{ item }}"
+      owner: root
+      group: root
+      mode: '0700'
+    loop:
+      - "registry.{{ domain }}.crt"
+      - "registry.{{ domain }}.key"
+
+  - name: Start registry
+    shell: |
+      for i in `docker ps | grep -v CONT | awk '{print $1}'`; do docker stop $i; done
+      for i in `docker ps -a | grep -v CONT | awk '{print $1}'`; do docker rm $i; done
+
+      cd /root/
+      mkdir auth
+      docker run \
+         --entrypoint htpasswd \
+         httpd:2 -Bbn testuser testpassword > auth/htpasswd  
+             
+      docker run -d \
+        --restart=always \
+        --name registry \
+        -v "$(pwd)"/auth:/auth \
+        -e "REGISTRY_AUTH=htpasswd" \
+        -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
+        -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd \        
+        -v /opt/docker_certs:/certs \
+        -e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
+        -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry.{{ domain }}.crt 	  \
+        -e REGISTRY_HTTP_TLS_KEY=/certs/registry.{{ domain }}.key  \
+        -p 443:443 \
+        registry:2   
+
+    args:
+      executable: /bin/bash                     
+
+  - name: Delete directory
+    file:
+      path: /etc/docker/certs.d/regca
+      state: absent
+
+  - name: Create directory
+    file:
+      path: /etc/docker/certs.d/regca
+      state: directory
+
+  - name: Transfer files
+    copy:
+      src: "{{ playbook_dir }}/certs/regca.crt" 
+      dest: /etc/docker/certs.d/regca/regca.crt      
+
+  - name: Restart docker
+    systemd:
+      name: docker 
+      state: restarted
+

@@ -1,0 +1,42 @@
+---
+# Refernence: https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md
+  
+  - include_vars: "{{ playbook_dir }}/vars.yml"  
+  
+  - name: Create cloud config file
+    template:
+      src: cloud.conf.j2
+      dest: /home/debian/cloud.conf
+      
+  - name: Delete the config 
+    ignore_errors: yes
+    shell: kubectl delete secret -n kube-system cloud-config
+
+  - name: Create the config
+    shell: kubectl create secret -n kube-system generic cloud-config --from-file=/home/debian/cloud.conf
+
+  - name: Copy files
+    copy:
+      src: "{{ item }}"
+      dest: "/home/debian/{{ item}}"
+    loop:
+      - cloud-controller-manager-roles.yaml
+      - cloud-controller-manager-role-bindings.yaml
+      - openstack-cloud-controller-manager-ds.yaml    
+
+  - name: Delete RBAC resources and openstack-cloud-controller-manager deamonset
+    ignore_errors: yes
+    shell: |
+      kubectl delete -f {{ item }}
+    loop:
+      - cloud-controller-manager-roles.yaml
+      - cloud-controller-manager-role-bindings.yaml
+      - openstack-cloud-controller-manager-ds.yaml   
+
+  - name: Create RBAC resources and openstack-cloud-controller-manager deamonset
+    shell: |
+      kubectl apply -f {{ item }}
+    loop:
+      - cloud-controller-manager-roles.yaml
+      - cloud-controller-manager-role-bindings.yaml
+      - openstack-cloud-controller-manager-ds.yaml       

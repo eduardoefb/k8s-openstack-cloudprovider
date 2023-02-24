@@ -1,0 +1,46 @@
+---
+# tasks file for 04-nfs
+  - include_vars: "{{ playbook_dir }}/vars.yml"  
+  - name: Install packages
+    apt:
+        pkg: 
+          - nfs-kernel-server 
+          - rsync
+        state: latest
+    register: apt_res
+    retries: 300
+    delay: 10
+    until: apt_res is success  
+
+  - name: Clear exports
+    file:
+      path: /etc/exports
+      state: absent
+
+  - name: Delete nfs directory
+    file:
+      path: "/srv/nfs"
+      state: absent       
+
+  - name: Create nfs directory
+    file:
+      path: "/srv/nfs"
+      state: directory
+      mode: '0755'   
+
+  - name: Allow worker and nodes 
+    lineinfile:
+      path: /etc/exports
+      create: yes
+      line: "/srv/nfs {{ int_net }}(rw,no_root_squash,subtree_check)"
+  
+  - name: Exportfs
+    command: exportfs -a
+
+  - name: Enable and restart nfs
+    systemd:
+      name: nfs-server
+      enabled: yes
+      state: restarted    
+
+    
