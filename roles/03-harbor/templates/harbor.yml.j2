@@ -1,0 +1,35 @@
+hostname: {{ registry_fqdn }}
+https:
+    port: 443
+    certificate: /opt/docker_certs/{{ registry_fqdn }}.crt
+    private_key: /opt/docker_certs/{{ registry_fqdn }}.key
+
+harbor_admin_password: {{ admin_pwd.stdout }}
+
+database:
+    password: {{ db_pwd.stdout }}
+    max_idle_conns: 2
+    max_open_conns: 0
+
+data_volume: /data/
+
+clair:
+    updaters_interval: 12
+
+jobservice:
+    max_job_workers: 10
+
+notification:
+    webhook_job_max_retry: 10
+
+chart:
+    absolute_url: disabled
+
+log:
+    level: error
+    local: 
+        rotate_count: 50
+        rotate_size: 200M
+        location: /var/log/harbor
+        
+

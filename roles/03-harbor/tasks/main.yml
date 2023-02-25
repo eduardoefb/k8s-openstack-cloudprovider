@@ -102,33 +102,41 @@
       - "registry.{{ domain }}.crt"
       - "registry.{{ domain }}.key"
 
-  - name: Start registry
-    shell: |
-      for i in `docker ps | grep -v CONT | awk '{print $1}'`; do docker stop $i; done
-      for i in `docker ps -a | grep -v CONT | awk '{print $1}'`; do docker rm $i; done
+  - name: Delete directory
+    file:
+      path: /opt/harbor
+      state: absent
 
-      cd /root/
-      mkdir auth
-      docker run \
-         --entrypoint htpasswd \
-         httpd:2 -Bbn testuser testpassword > auth/htpasswd  
-             
-      docker run -d \
-        --restart=always \
-        --name registry \
-        -v "$(pwd)"/auth:/auth \
-        -e "REGISTRY_AUTH=htpasswd" \
-        -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
-        -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd \        
-        -v /opt/docker_certs:/certs \
-        -e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
-        -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry.{{ domain }}.crt 	  \
-        -e REGISTRY_HTTP_TLS_KEY=/certs/registry.{{ domain }}.key  \
-        -p 443:443 \
-        registry:2   
+  - name: Create directory
+    file:
+      path: /opt/harbor
+      state: directory
 
-    args:
-      executable: /bin/bash                     
+  - name: Download harbor
+    unarchive:
+      src:  https://github.com/goharbor/harbor/releases/download/v2.5.6/harbor-offline-installer-v2.5.6.tgz
+      dest: /opt/
+      remote_src: yes
+    register: apt_res
+    retries: 300
+    delay: 10
+    until: apt_res is success   
+
+  - name: Define the admin password
+    shell: openssl rand -hex 30
+    register: admin_pwd
+
+  - name: Define the database password
+    shell: openssl rand -hex 30
+    register: db_pwd
+
+  - name: Create harbor yml file
+    template:
+      src: harbor.yml.j2
+      dest: /opt/harbor/harbor.yml    
+
+  - name: Prepare harbor installation
+    shell: /opt/harbor/prepare 
 
   - name: Delete directory
     file:
@@ -149,4 +157,7 @@
     systemd:
       name: docker 
       state: restarted
+
+  - name: Execute harbor installation
+    shell: /opt/harbor/install.sh      
 
