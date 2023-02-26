@@ -152,8 +152,8 @@ function update_inventory(){
     echo >> vars.yml
     echo "int_net: `cat int_network.txt`" >> vars.yml
     echo "domain: `cat domain.txt | sed 's/.$//g'`" >> vars.yml
-    echo "registry-fqdn: registry.`cat domain.txt | sed 's/.$//g'`"  >> vars.yml
-    echo "nfs-fqdn: nfs.`cat domain.txt | sed 's/.$//g'`"  >> vars.yml
+    echo "registry_fqdn: registry.`cat domain.txt | sed 's/.$//g'`"  >> vars.yml
+    echo "nfs_fqdn: nfs.`cat domain.txt | sed 's/.$//g'`"  >> vars.yml
     echo "c: C=BR"  >> vars.yml
 
     echo >> hosts
@@ -206,3 +206,6 @@ sed -i '/^$/d' *.txt
 update_inventory
 
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts ansible-deploy.yml
+
+mkdir -p ~/.kube
+cp files/kubeconfig ~/.kube/config

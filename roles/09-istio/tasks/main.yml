@@ -1,0 +1,64 @@
+---
+# tasks file for 09-istio
+  - include_vars: "{{ playbook_dir }}/vars.yml"  
+
+  - name: Clear directory
+    file:
+      path: /home/debian/istio
+      state: absent
+ 
+  - name: Create directory
+    file:
+      path: /home/debian/istio
+      state: directory
+
+  - name: Delete istio if exists
+    ignore_errors: yes
+    shell: kubectl delete namespace istio-system
+
+  - name: Download istio
+    get_url:
+      url: https://istio.io/downloadIstio
+      dest: /home/debian/istio
+    register: apt_res
+    retries: 300
+    delay: 10
+    until: apt_res is success  
+
+
+  - name: Run istio script
+    shell: |
+      cd /home/debian/istio 
+      bash downloadIstioCandidate.sh
+    register: apt_res
+    retries: 300
+    delay: 10
+    until: apt_res is success    
+
+  - name: Install istio
+    shell: |      
+      sleep 120 && kubectl -n kube-system rollout restart deployment coredns&
+      cd /home/debian/istio        
+      cd `ls | grep istio`
+      bin/istioctl install --set profile=demo -y
+    register: apt_res
+    retries: 300
+    delay: 10
+    until: apt_res is success   
+
+  - name: Kiali, prometheus, grafana, jeagger
+    shell: |
+      kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.16/samples/addons/kiali.yaml
+      kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.16/samples/addons/prometheus.yaml
+      kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.16/samples/addons/grafana.yaml
+      kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.16/samples/addons/jaeger.yaml
+      for p in kiali prometheus grafana; do
+        kubectl -n istio-system expose service ${p} --name ${p}-external --type LoadBalancer
+      done
+        
+    register: apt_res
+    retries: 300
+    delay: 10
+    until: apt_res is success  
+    args:
+      executable: /bin/bash                      

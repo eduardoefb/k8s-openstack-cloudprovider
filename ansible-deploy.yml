@@ -23,7 +23,7 @@
   user: debian
   become: true
   roles:
-    - role: 03-docker
+    - role: 03-harbor
 
 - hosts: NFS
   user: debian
@@ -89,3 +89,5 @@
   roles:
     - role: 06-ingress
     - role: 07-cloud-controller-manager
+    - role: 08-nfs-storageclass    
+    - role: 09-istio

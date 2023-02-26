@@ -511,6 +511,7 @@ resource "openstack_dns_recordset_v2" "registry" {
   ttl         = 3000
   type        = "A"
   records     = [ element(openstack_compute_instance_v2.registry.*.access_ip_v4, count.index) ]
+  #records     = [ element(openstack_networking_floatingip_v2.registry_floating_ip.*.address, count.index) ] 
 }
 
 resource "openstack_dns_recordset_v2" "registry_vip" {
@@ -519,7 +520,7 @@ resource "openstack_dns_recordset_v2" "registry_vip" {
   description = "Recordset k8s"
   ttl         = 3000
   type        = "A"
-  records     = [for instance in openstack_compute_instance_v2.registry : instance.access_ip_v4]
+  records     = [for instance in openstack_networking_floatingip_v2.registry_floating_ip : instance.address]
 }
 
 
