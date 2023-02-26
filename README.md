@@ -98,34 +98,6 @@ kubectl get secret registry-auth
 
 - Create the test deployment:
 ```bash
-kubectl delete pod test-pod
-image="registry.kube.int/k8s/testimage:0.0.3"
-cat <<EOF | kubectl create -f -
-apiVersion: v1
-kind: Pod
-metadata:
-
-  namespace: test
-  name: test-pod
-  labels:
-    app: test-pod
-spec:
-  imagePullSecrets:
-  - name: registry-auth
-  containers:
-  - name: netshoot-pod
-    image: ${image}
-    imagePullPolicy: Always 
-    ports:
-    - containerPort: 8000
-    securityContext:
-      runAsUser: 1000750000
-      runAsGroup: 1000750000     
-  terminationGracePeriodSeconds: 0
- 
-EOF
-
-
 kubectl delete deployment test-deployment
 cat << EOF | kubectl create -f -
 apiVersion: apps/v1
@@ -182,7 +154,57 @@ debian@k8s-bastian:~/tmpimage$
 Allow namespace to get istio injected:
 ```shell
 kubectl label namespace test istio-injection=enabled
-kubectl scale deployment test-deployment --replicas=0
-kubectl scale deployment test-deployment --replicas=2
+kubectl rollout restart deployment test-deployment
 
+```
+
+Create the services:
+```shell
+kubectl expose deployment test-deployment --port 80 --target-port 8000
+```
+
+Create the gateway and virtualservice:
+```shell
+cat << EOF | kubectl create -f -
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: test-gateway
+spec:
+  selector:
+    istio: ingressgateway 
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: testvs
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - test-gateway
+  http:
+  - match:
+    - uri:
+        exact: /input.txt        
+    route:
+    - destination:
+        host: test-deployment
+        port:
+          number: 80
+EOF
+```
+
+
+Check:
+```
+ingress_gw_ip=`kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`
+curl http://${ingress_gw_ip}/input.txt
 ```
