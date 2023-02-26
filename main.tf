@@ -65,96 +65,27 @@ resource "openstack_networking_router_interface_v2" "router_interface_01" {
 }
 
 
-# Security group
+# Security group (for now, everything is open)
 resource "openstack_compute_secgroup_v2" "secgroup" {
   name        = "${var.environment.prefix}-secgroup"
   description = "secgroup"
+  
 
   rule {
     from_port   = 22
-    to_port     = 22
+    to_port     = 65535
     ip_protocol = "tcp"
     cidr        = "0.0.0.0/0"    
   }
 
- rule {
-    from_port   = 111
-    to_port     = 111
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }
-
   rule {
-    from_port   = 111
-    to_port     = 111
+    from_port   = 22
+    to_port     = 65535
     ip_protocol = "udp"
-    cidr        = "0.0.0.0/0"
-  }
-
- rule {
-    from_port   = 2049
-    to_port     = 2049
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }
-
-  rule {
-    from_port   = 2049
-    to_port     = 2049
-    ip_protocol = "udp"
-    cidr        = "0.0.0.0/0"
+    cidr        = "0.0.0.0/0"    
   }  
 
- rule {
-    from_port   = 443
-    to_port     = 443
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }
-
-  rule {
-    from_port   = 6443
-    to_port     = 6443
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }
-
-  rule {
-    from_port   = 2379
-    to_port     = 2380
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }
-
-  rule {
-    from_port   = 10250
-    to_port     = 10250
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }  
-
-  rule {
-    from_port   = 10257
-    to_port     = 10257
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }  
-
-  rule {
-    from_port   = 10259
-    to_port     = 10259
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }  
-
-
-  rule {
-    from_port   = 30000
-    to_port     = 32767
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }  
-
+  
   rule {
     from_port   = -1
     to_port     = -1
@@ -456,8 +387,10 @@ resource "openstack_dns_recordset_v2" "bastian" {
   description = "Recordset k8s"
   ttl         = 3000
   type        = "A"
-  records     = [ openstack_compute_instance_v2.bastian.access_ip_v4 ]
+  #records     = [ openstack_compute_instance_v2.bastian.access_ip_v4 ]
+  records     = [ openstack_networking_floatingip_v2.bastian_floating_ip.address ]
 }
+
 
 # Master
 resource "openstack_dns_recordset_v2" "master" {
