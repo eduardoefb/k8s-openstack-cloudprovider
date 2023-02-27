@@ -69,7 +69,7 @@ read reg_user
 echo "Enter your registry pass:"
 read -s reg_pass
 
-REGISTRY_CREDENTIALS="eduardoefb:Mirunda12#"
+REGISTRY_CREDENTIALS="${reg_user}:${reg_pass}"
 cat << EOF > /tmp/secret.json
 {
    "auths": {
@@ -98,6 +98,7 @@ kubectl get secret registry-auth
 
 - Create the test deployment:
 ```bash
+image="registry.kube.int/k8s/testimage:0.0.3"
 kubectl delete deployment test-deployment
 cat << EOF | kubectl create -f -
 apiVersion: apps/v1
