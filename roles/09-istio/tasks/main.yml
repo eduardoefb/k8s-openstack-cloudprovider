@@ -52,13 +52,32 @@
       kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.16/samples/addons/prometheus.yaml
       kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.16/samples/addons/grafana.yaml
       kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.16/samples/addons/jaeger.yaml
-      for p in kiali prometheus grafana; do
-        kubectl -n istio-system expose service ${p} --name ${p}-external --type LoadBalancer
-      done
         
     register: apt_res
     retries: 300
     delay: 10
     until: apt_res is success  
     args:
-      executable: /bin/bash                      
+      executable: /bin/bash           
+
+    # Reference: https://istio.io/latest/docs/tasks/observability/gateways/
+
+  - name: Prepare the files
+    template:
+      src: "{{ item }}_expose.yml.j2"         
+      dest: /tmp/{{ item }}.yml
+    loop:
+      - grafana
+      - kiali
+      - prometheus
+      - tracing
+
+
+  - name: Exec the files
+    shell:
+      kubectl apply -f  /tmp/{{ item }}.yml
+    loop:
+      - grafana
+      - kiali
+      - prometheus
+      - tracing
