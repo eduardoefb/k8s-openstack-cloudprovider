@@ -23,6 +23,11 @@
       reboot_timeout: 3600
     when: reboot_required_file.stat.exists == true
 
+  - name: Enable sctp module
+    copy:
+      src: modules
+      dest: /etc/modules
+    notify: reboot
 
   - name: Create directory
     file:
@@ -53,3 +58,5 @@
       packages:
         - nfs-kernel-server 
         - rsync      
+
+  
