@@ -161,3 +161,10 @@
   - name: Execute harbor installation
     shell: /opt/harbor/install.sh      
 
+  - name: Get harbor config file
+    fetch:
+      src: /opt/harbor/harbor.yml
+      dest: "{{ playbook_dir }}"
+      flat: yes
+
+
