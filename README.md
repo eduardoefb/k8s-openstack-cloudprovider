@@ -13,15 +13,15 @@ bash create.sh -d
 ```
 
 ### After deployment, do some tests:
-- Connect to harbor virtual machine and check the admin password:
+The Harbor administrator password is located in the 'files/harbor.yml' file, which is created when the Harbor deployment is completed. The administrator password is required to add new users and projects. Alternatively, there is a Python script that uses Selenium to create new users:
+
 ```shell
- grep admin /opt/harbor/harbor.yml 
+ python3 add_harbor_user_project.py
  ```
 
- Create a regular user and a project, than, connect go the bastian and create a test image:
+With user and project, you can start the test:
 
-
-- Create a sample image
+ - Create a sample image
 ```bash
 
 rm -rf ~/tmpimage
