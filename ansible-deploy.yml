@@ -1,7 +1,7 @@
 - hosts: localhost
   roles:
     - role: 01-certs
-
+    
 - hosts: localhost
   tasks:
     - include_vars: "{{ playbook_dir }}/vars.yml"
@@ -12,6 +12,16 @@
         timeout: 3000
       loop:
         "{{ all_external }}"
+
+    - name: Clear files directory
+      file:
+        path: "{{ playbook_dir }}/files"
+        state: absent
+
+    - name: Create files directory
+      file:
+        path: "{{ playbook_dir }}/files"
+        state: directory        
 
 - hosts: ALL
   user: debian
@@ -35,19 +45,6 @@
   user: debian  
   roles:
     - role: 05-k8s-inst  
-
-
-- hosts: localhost
-  tasks:
-    - name: Clear file
-      file:
-        path: "{{ playbook_dir }}/files"
-        state: absent
-
-    - name: Clear file
-      file:
-        path: "{{ playbook_dir }}/files"
-        state: directory
 
 - hosts: MASTER
   user: debian

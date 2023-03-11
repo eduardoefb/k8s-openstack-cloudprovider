@@ -17,11 +17,16 @@
       path: /var/run/reboot-required
     register: reboot_required_file  
   
-  - name: Reboot
-    reboot:
-      msg: Reboot
-      reboot_timeout: 3600
-    when: reboot_required_file.stat.exists == true
+  #- name: Reboot
+  #  reboot:
+  #    msg: Reboot
+  #    reboot_timeout: 3600
+  #  when: reboot_required_file.stat.exists == true
+
+  - name: Notify reboot
+    shell: echo "reboot"  > /tmp/reboot
+    when: reboot_required_file.stat.exists == true    
+    notify: reboot
 
   - name: Enable sctp module
     copy:

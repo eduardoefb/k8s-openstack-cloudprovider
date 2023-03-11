@@ -164,7 +164,7 @@
   - name: Get harbor config file
     fetch:
       src: /opt/harbor/harbor.yml
-      dest: "{{ playbook_dir }}"
+      dest: "{{ playbook_dir }}/files/harbor.yml"
       flat: yes
 
 
