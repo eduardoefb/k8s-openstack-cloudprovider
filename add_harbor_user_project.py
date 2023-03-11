@@ -22,12 +22,25 @@ if not os.path.exists(str(harbor_filename)):
     exit(1)
 
 local_user = input("Enter the username to be created: ")
-local_pass = getpass("Enter the password: ")
+
+while True:
+    local_pass = getpass("Enter the password: ")
+    re_local_pass = getpass("Re-enter the password: ")
+    if str(local_pass) != str(re_local_pass):
+        print("Passwords don't match!")
+    else:
+        break
 local_email = "user@gitlab.com"
 local_realname = "User Sample"
 local_project = input("Enter the project name: ")
+print("You have entered the values:")
+print("User   : " + str(local_user))
+print("Project: " + str(local_project))
+confirmation = input("Do you confirm? (Y/N) ")
+if confirmation.upper() != "Y":
+    print("User aborted!")
+    exit(1)
 
-print(str(local_user))
 
 # Open console:
 tmout=2000
