@@ -42,6 +42,11 @@ data "openstack_networking_subnet_v2" "lb_subnet"{
   name = var.environment.lb_subnet
 }
 
+data openstack_images_image_v2 image_01 {
+  name = var.environment.image
+}
+
+
 # Router
 resource "openstack_networking_router_v2" "router" {
   name                = "${var.environment.prefix}-router"
@@ -208,6 +213,7 @@ resource "openstack_compute_floatingip_associate_v2" "worker_floating_ip_associa
 #########################################################################################################
 # Registry nodes
 #########################################################################################################
+
 resource "openstack_compute_instance_v2" "registry" {
   count           = var.environment.registry_nodes
   name            = "${var.environment.prefix}-registry-${count.index}"
@@ -219,16 +225,15 @@ resource "openstack_compute_instance_v2" "registry" {
     name = openstack_networking_network_v2.network.name
   }
 
-  /*   
+   
   block_device {
     uuid                  = data.openstack_images_image_v2.image_01.id
     source_type           = "image"
-    volume_size           = 40
+    volume_size           = 80
     boot_index            = 0
     destination_type      = "volume"
     delete_on_termination = true
   }
-*/
 
   depends_on = [
     openstack_networking_network_v2.network,
@@ -268,16 +273,16 @@ resource "openstack_compute_instance_v2" "nfs" {
     name = openstack_networking_network_v2.network.name
   }
 
-/*
+
   block_device {
     uuid                  = data.openstack_images_image_v2.image_01.id
     source_type           = "image"
-    volume_size           = 40
+    volume_size           = 80
     boot_index            = 0
     destination_type      = "volume"
     delete_on_termination = true
   }
-*/
+
   depends_on = [
     openstack_networking_network_v2.network,
     openstack_networking_subnet_v2.subnet,

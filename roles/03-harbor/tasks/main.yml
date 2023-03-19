@@ -35,7 +35,8 @@
 
   - name: Add Docker official GPG key
     shell: |
-      mkdir -m 0755 -p /etc/apt/keyrings        
+      mkdir -m 0755 -p /etc/apt/keyrings      
+      if [ -f /etc/apt/keyrings/docker.gpg ]  ; then rm -f /etc/apt/keyrings/docker.gpg; fi
       curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
     register: apt_res
     retries: 300
