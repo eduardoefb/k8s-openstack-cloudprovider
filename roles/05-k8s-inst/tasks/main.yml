@@ -58,8 +58,10 @@
   - name: Clone kubestpray
     ansible.builtin.git:
       repo: 'https://github.com/kubernetes-sigs/kubespray.git'
-      dest: "{{ home_dir.stdout }}/deployment/kubespray"
+      dest: "{{ home_dir.stdout }}/deployment/kubespray"      
+      #version: release-2.21
       version: master
+
     register: apt_res
     retries: 300
     delay: 10
@@ -125,14 +127,21 @@
       sed -i 's/etcd_deployment_type: docker/etcd_deployment_type: host/g' {{ home_dir.stdout }}/deployment/kubespray/inventory/mycluster/group_vars/etcd.yml
       chown -R debian:debian {{ home_dir.stdout }}/deployment/kubespray         
 
+  - name: Copy the workaround file
+    copy:
+      src: download_file.yml
+      dest: "{{ home_dir.stdout }}/deployment/kubespray/roles/download/tasks/download_file.yml"
+
   - name: Deploy ( connect to the bastian and follow the log /tmp/kubespray.log )
     shell: |
       cd {{ home_dir.stdout }}/deployment/kubespray
-      {{ home_dir.stdout }}/.local/bin/ansible-playbook -i inventory/mycluster/hosts.yaml  --become --become-user=root cluster.yml > /tmp/kubespray.log
-    register: apt_res
-    retries: 300
-    delay: 10
-    until: apt_res is success   
+      for f in `grep -lr  "no_log: True" *`; do sed -i 's|no_log: True|no_log: False|g' ${f}; done
+      for f in `grep -lr  "no_log: true" *`; do sed -i 's|no_log: true|no_log: false|g' ${f}; done
+      for f in `grep -lr -i 'unsafe_show_logs: false' *`; do sed -i 's|unsafe_show_logs: false|unsafe_show_logs: true|g' ${f}; done
+      # Remove checksum verification:
+      #sed -i '/checksum:/d' {{ home_dir.stdout }}/deployment/kubespray/roles/download/tasks/download_file.yml
+      {{ home_dir.stdout }}/.local/bin/ansible-playbook -i inventory/mycluster/hosts.yaml --become --become-user=root cluster.yml > /tmp/kubespray.log
+
 
 
 

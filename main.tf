@@ -225,7 +225,7 @@ resource "openstack_compute_instance_v2" "registry" {
     name = openstack_networking_network_v2.network.name
   }
 
-   
+  /*
   block_device {
     uuid                  = data.openstack_images_image_v2.image_01.id
     source_type           = "image"
@@ -233,7 +233,7 @@ resource "openstack_compute_instance_v2" "registry" {
     boot_index            = 0
     destination_type      = "volume"
     delete_on_termination = true
-  }
+  } */
 
   depends_on = [
     openstack_networking_network_v2.network,
@@ -272,8 +272,8 @@ resource "openstack_compute_instance_v2" "nfs" {
   network {
     name = openstack_networking_network_v2.network.name
   }
-
-
+  
+  /*
   block_device {
     uuid                  = data.openstack_images_image_v2.image_01.id
     source_type           = "image"
@@ -282,6 +282,7 @@ resource "openstack_compute_instance_v2" "nfs" {
     destination_type      = "volume"
     delete_on_termination = true
   }
+  */
 
   depends_on = [
     openstack_networking_network_v2.network,
