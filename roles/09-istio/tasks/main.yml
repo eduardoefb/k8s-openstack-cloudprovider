@@ -40,7 +40,7 @@
       sleep 120 && kubectl -n kube-system rollout restart deployment coredns&
       cd /home/debian/istio        
       cd `ls | grep istio`
-      bin/istioctl install --set profile=demo -y
+      bin/istioctl install --set profile=demo -y       
     register: apt_res
     retries: 300
     delay: 10

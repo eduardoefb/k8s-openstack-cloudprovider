@@ -208,4 +208,9 @@ Check:
 ```
 ingress_gw_ip=`kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`
 curl http://${ingress_gw_ip}/input.txt
+
 ```
+
+
+## Customizations in jaeger tracing:
+https://istio.io/latest/docs/tasks/observability/distributed-tracing/mesh-and-proxy-config/#customizing-trace-sampling

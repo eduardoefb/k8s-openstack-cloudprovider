@@ -22,7 +22,7 @@ variable environment {
                      worker_flavor = string})
     default = {
         prefix = "k8s"
-        master_nodes = "3",
+        master_nodes = "1",
         worker_nodes = "3",
         registry_nodes = "1",
         nfs_nodes =  "1",
