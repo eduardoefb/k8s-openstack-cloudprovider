@@ -197,11 +197,13 @@ if [ ! -f ssh_keys/id_rsa -o ! -f ssh_keys/id_rsa.pub ]; then
 fi
 
 if [ "${1}" == "-d" ]; then
+
 delete_script=`mktemp`
-  kubectl get services -A | grep LoadBalancer | awk '{print "kubectl -n "$1" delete service "$2}' > ${delete_script}
-  bash -x ${delete_script}
+  #kubectl get services -A | grep LoadBalancer | awk '{print "kubectl -n "$1" delete service "$2}' > ${delete_script}
+  #bash -x ${delete_script}
   terraform destroy --auto-approve
 fi
+
 terraform apply --auto-approve
 for f in *.txt; do echo >> $f; done
 sed -i '/^$/d' *.txt

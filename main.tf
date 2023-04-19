@@ -70,12 +70,57 @@ resource "openstack_networking_router_interface_v2" "router_interface_01" {
 }
 
 
+resource "openstack_networking_secgroup_v2" "k8s_secgroup" {
+  name        = "k8s_secgroup"
+  description = "Security group for k8s"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "k8s_tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 22
+  port_range_max    = 65535
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.k8s_secgroup.id}"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "k8s_udp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 22
+  port_range_max    = 65535
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.k8s_secgroup.id}"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "k8s_sctp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "sctp"
+  port_range_min    = "38412"
+  port_range_max    = "38412"
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.k8s_secgroup.id}"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "k8s_sctp2" {
+  direction         = "egress"
+  ethertype         = "IPv4"
+  protocol          = "sctp"
+  port_range_min    = "38412"
+  port_range_max    = "38412"
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.k8s_secgroup.id}"
+}
+
 # Security group (for now, everything is open)
+/*
 resource "openstack_compute_secgroup_v2" "secgroup" {
   name        = "${var.environment.prefix}-secgroup"
   description = "secgroup"
   
-
   rule {
     from_port   = 22
     to_port     = 65535
@@ -100,6 +145,7 @@ resource "openstack_compute_secgroup_v2" "secgroup" {
   }  
 }
 
+*/
 #########################################################################################################
 #     Bastian node
 #########################################################################################################
@@ -108,7 +154,7 @@ resource "openstack_compute_instance_v2" "bastian" {
   flavor_name     = var.environment.bastian_flavor
   image_name      = var.environment.image
   key_pair        = openstack_compute_keypair_v2.keypair.name
-  security_groups = [ openstack_compute_secgroup_v2.secgroup.name ]
+  security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name ]
   network {
     name = openstack_networking_network_v2.network.name
   }
@@ -144,7 +190,7 @@ resource "openstack_compute_instance_v2" "master" {
   flavor_name     = var.environment.master_flavor
   image_name      = var.environment.image
   key_pair        = openstack_compute_keypair_v2.keypair.name
-  security_groups = [ openstack_compute_secgroup_v2.secgroup.name ]
+  security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
   network {
     name = openstack_networking_network_v2.network.name
   }
@@ -181,7 +227,7 @@ resource "openstack_compute_instance_v2" "worker" {
   flavor_name     = var.environment.worker_flavor
   image_name      = var.environment.image
   key_pair        = openstack_compute_keypair_v2.keypair.name
-  security_groups = [ openstack_compute_secgroup_v2.secgroup.name ]
+  security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name ]
   network {
     name = openstack_networking_network_v2.network.name
   }
@@ -220,7 +266,7 @@ resource "openstack_compute_instance_v2" "registry" {
   flavor_name     = var.environment.registry_flavor
   image_name      = var.environment.image
   key_pair        = openstack_compute_keypair_v2.keypair.name
-  security_groups = [ openstack_compute_secgroup_v2.secgroup.name ]
+  security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
   network {
     name = openstack_networking_network_v2.network.name
   }
@@ -267,7 +313,7 @@ resource "openstack_compute_instance_v2" "nfs" {
   name            = "${var.environment.prefix}-nfs-${count.index}"
   flavor_name     = var.environment.nfs_flavor
   image_name      = var.environment.image
-  security_groups = [ openstack_compute_secgroup_v2.secgroup.name ]
+  security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
   key_pair        = openstack_compute_keypair_v2.keypair.name
   network {
     name = openstack_networking_network_v2.network.name
