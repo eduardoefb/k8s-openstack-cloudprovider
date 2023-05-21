@@ -11,7 +11,10 @@
         - buildah 
         - snapd
         - python3-openstackclient
-
+        - gnupg
+        - software-properties-common
+        - wget
+        
   - name: Install core
     become: yes 
     shell: "snap install core"

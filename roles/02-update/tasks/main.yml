@@ -2,6 +2,11 @@
 # tasks file for 01-update
   - include_vars: "{{ playbook_dir }}/vars.yml" 
 
+  - name: Update /etc/hosts
+    template:
+      src: etc_hosts.j2
+      dest: /etc/hosts
+
   - name: Update 
     apt:
       name: '*'
@@ -17,12 +22,6 @@
       path: /var/run/reboot-required
     register: reboot_required_file  
   
-  #- name: Reboot
-  #  reboot:
-  #    msg: Reboot
-  #    reboot_timeout: 3600
-  #  when: reboot_required_file.stat.exists == true
-
   - name: Notify reboot
     shell: echo "reboot"  > /tmp/reboot
     when: reboot_required_file.stat.exists == true    

@@ -188,9 +188,18 @@ function update_inventory(){
     echo "floating_network_id: `cat floating_network_id.txt`" >> vars.yml
 }
 
+function usage(){
+    echo "Usage:"
+    echo "${0} <Number of worker nodes>"
+    exit 1
+}
 
 export DOMAIN="k8so.int"
 export LB_PREFIX="k8so-lb"
+
+if [ -z "${1}" ]; then 
+    usage
+fi
 
 if [ ! -d ssh_keys ]; then
     mkdir -p ssh_keys
@@ -207,13 +216,33 @@ if [ "${1}" == "-d" ]; then
     terraform destroy --auto-approve
 fi
 
+worker_nodes_str=`grep -P 'worker_nodes\s=\s\"\d+\"' variables.tf`
+#actual_worker_nodes=`grep -oP '(?<=worker_nodes\s=\s\")(\d+)(?=\")' variables.tf`
+actual_worker_nodes=`openstack server list  -f value -c Name  | grep -P 'worker-\d+' | wc -l`
+
+# Replace the number of worker nodes in the terraform variables.tf file:
+sed -i "s|${worker_nodes_str}|worker_nodes = \"${1}\",|g" variables.tf
+
+# Remove worker nodes in case of scale in:
+scale=${1}
+echo ${actual_worker_nodes}
+
+if [ ${scale} -lt ${actual_worker_nodes} ]; then 
+    dif=$((${actual_worker_nodes}-${scale}))    
+    for w in `kubectl get nodes -o custom-columns=NAME:.metadata.name | grep -P '\w+-worker-\d+' | grep -v "^NAME"  | sort | tail -${dif}`; do
+        kubectl drain --ignore-daemonsets --delete-emptydir-data ${w}
+        kubectl delete node ${w}
+    done
+fi
+
 terraform apply --auto-approve
 for f in *.txt; do echo >> $f; done
 sed -i '/^$/d' *.txt
 
+set -x
 update_inventory
+set +x
 
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts ansible-deploy.yml
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts ansible-scale.yml
 
-mkdir -p ~/.kube
-cp files/kubeconfig ~/.kube/config
+
