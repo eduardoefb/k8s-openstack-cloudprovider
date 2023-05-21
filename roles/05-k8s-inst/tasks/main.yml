@@ -9,6 +9,42 @@
         - python3-pip
         - git
         - buildah 
+        - snapd
+        - python3-openstackclient
+
+  - name: Install core
+    become: yes 
+    shell: "snap install core"
+
+  - name: Install juju
+    become: yes
+    shell: "snap install juju --classic --channel=3.0/stable"
+
+  - name: Create juju directory at Debian's home directory
+    file:
+      path: /home/debian/.local/share/juju
+      state: directory
+      owner: debian
+      group: debian
+
+  - name: Create the openstack environment variables
+    template:
+      src: bashrc.j2
+      dest: /home/debian/.bashrc
+      owner: debian
+      group: debian
+  
+  - name: Create the certificate dir
+    file:
+      path: /home/debian/openstack_ca
+      state: directory
+      owner: debian
+      group: debian
+  
+  - name: Copy the openstack certificate
+    copy:
+      src: "{{ openstack.cacert }}"
+      dest: /home/debian/openstack_ca/rootCA.pem
 
   - name: Install podman
     become: yes

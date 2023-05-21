@@ -178,6 +178,10 @@ function update_inventory(){
     echo "  domain_name: ${OS_USER_DOMAIN_NAME}" >> vars.yml
     echo "  project_id: `openstack project show ${OS_PROJECT_NAME} -f value -c id`"  >> vars.yml
     echo "  region: `openstack region list -f value -c Region | head -1`" >> vars.yml
+    echo "  os_identity_api_version: ${OS_IDENTITY_API_VERSION}" >> vars.yml
+    echo "  os_image_api_version: ${OS_IMAGE_API_VERSION}" >> vars.yml
+    echo "  os_project_domain_name: ${OS_PROJECT_DOMAIN_NAME}" >> vars.yml
+    echo "  os_user_domain_name: ${OS_USER_DOMAIN_NAME}" >> vars.yml
     
     echo >> vars.yml
     echo "internal_subnet_id: `cat internal_subnet_id.txt`" >> vars.yml

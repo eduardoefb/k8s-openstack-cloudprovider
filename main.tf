@@ -95,6 +95,16 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_udp" {
   security_group_id = "${openstack_networking_secgroup_v2.k8s_secgroup.id}"
 }
 
+resource "openstack_networking_secgroup_rule_v2" "k8s_udp_out" {
+  direction         = "egress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 22
+  port_range_max    = 65535
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.k8s_secgroup.id}"
+}
+
 resource "openstack_networking_secgroup_rule_v2" "k8s_sctp" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -154,6 +164,7 @@ resource "openstack_compute_instance_v2" "bastian" {
   flavor_name     = var.environment.bastian_flavor
   image_name      = var.environment.image
   key_pair        = openstack_compute_keypair_v2.keypair.name
+  availability_zone = var.environment.bastian_az
   security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name ]
   network {
     name = openstack_networking_network_v2.network.name
@@ -190,6 +201,7 @@ resource "openstack_compute_instance_v2" "master" {
   flavor_name     = var.environment.master_flavor
   image_name      = var.environment.image
   key_pair        = openstack_compute_keypair_v2.keypair.name
+  availability_zone = var.environment.master_az
   security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
   network {
     name = openstack_networking_network_v2.network.name
@@ -227,6 +239,7 @@ resource "openstack_compute_instance_v2" "worker" {
   flavor_name     = var.environment.worker_flavor
   image_name      = var.environment.image
   key_pair        = openstack_compute_keypair_v2.keypair.name
+  availability_zone = var.environment.worker_az
   security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name ]
   network {
     name = openstack_networking_network_v2.network.name
@@ -266,6 +279,7 @@ resource "openstack_compute_instance_v2" "registry" {
   flavor_name     = var.environment.registry_flavor
   image_name      = var.environment.image
   key_pair        = openstack_compute_keypair_v2.keypair.name
+  availability_zone = var.environment.registry_az
   security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
   network {
     name = openstack_networking_network_v2.network.name
@@ -313,6 +327,7 @@ resource "openstack_compute_instance_v2" "nfs" {
   name            = "${var.environment.prefix}-nfs-${count.index}"
   flavor_name     = var.environment.nfs_flavor
   image_name      = var.environment.image
+  availability_zone = var.environment.nfs_az
   security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
   key_pair        = openstack_compute_keypair_v2.keypair.name
   network {

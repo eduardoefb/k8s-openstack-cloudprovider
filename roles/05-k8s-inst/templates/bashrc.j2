@@ -1,0 +1,86 @@
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+HISTCONTROL=ignoreboth
+
+shopt -s histappend
+
+HISTSIZE=1000
+HISTFILESIZE=2000
+
+shopt -s checkwinsize
+
+if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+
+case "$TERM" in
+    xterm-color|*-256color) color_prompt=yes;;
+esac
+
+
+if [ -n "$force_color_prompt" ]; then
+    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+	# We have color support; assume it's compliant with Ecma-48
+	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+	# a case would tend to support setf rather than setaf.)
+	color_prompt=yes
+    else
+	color_prompt=
+    fi
+fi
+
+if [ "$color_prompt" = yes ]; then
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+else
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+fi
+unset color_prompt force_color_prompt
+
+case "$TERM" in
+xterm*|rxvt*)
+    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+    ;;
+*)
+    ;;
+esac
+
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+fi
+
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
+fi
+
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
+
+
+# Openstack environment:
+export OS_PROJECT_DOMAIN_NAME={{ openstack.os_project_domain_name }}
+export OS_USER_DOMAIN_NAME={{ openstack.os_user_domain_name }}
+export OS_PROJECT_NAME={{ openstack.project_name }}
+export OS_USERNAME={{ openstack.username }}
+export OS_PASSWORD={{ openstack.password }}
+export OS_AUTH_URL={{ openstack.auth_url }}
+export OS_IDENTITY_API_VERSION={{ openstack.os_identity_api_version }}
+export OS_IMAGE_API_VERSION={{ openstack.os_image_api_version }}
+export OS_CACERT=/home/debian/openstack_ca/rootCA.pem
+
+# Alias
+alias os=openstack
+alias osl="openstack server list --long --all -c Name -c Status -c Host"
+alias ohl="openstack hypervisor list"
+source <(openstack complete 2>/dev/null)
+source <(kubectl completion bash)
+alias kube-pending="kubectl get pods -A | grep  -vP '\s+(\d+)/\1\s+' | grep -vE 'Completed'"
+alias k=kubectl
