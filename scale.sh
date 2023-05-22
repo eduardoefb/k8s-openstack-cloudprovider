@@ -218,14 +218,13 @@ fi
 
 worker_nodes_str=`grep -P 'worker_nodes\s=\s\"\d+\"' variables.tf`
 #actual_worker_nodes=`grep -oP '(?<=worker_nodes\s=\s\")(\d+)(?=\")' variables.tf`
-actual_worker_nodes=`openstack server list  -f value -c Name  | grep -P 'worker-\d+' | wc -l`
-
+#actual_worker_nodes=`openstack server list  -f value -c Name  | grep -P 'worker-\d+' | wc -l`
+actual_worker_nodes=`kubectl get nodes -o custom-columns=NAME:.metadata.name | grep -P '\w+-worker-\d+' | grep -v "^NAME"  | wc -l`
 # Replace the number of worker nodes in the terraform variables.tf file:
 sed -i "s|${worker_nodes_str}|worker_nodes = \"${1}\",|g" variables.tf
 
 # Remove worker nodes in case of scale in:
 scale=${1}
-echo ${actual_worker_nodes}
 
 if [ ${scale} -lt ${actual_worker_nodes} ]; then 
     dif=$((${actual_worker_nodes}-${scale}))    
@@ -243,6 +242,21 @@ set -x
 update_inventory
 set +x
 
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts ansible-scale.yml
+k8s_nodes=`mktemp`
+kubectl get nodes -o custom-columns=NAME:.metadata.name | grep -P '\w+-worker-\d+' | grep -v "^NAME"  | sort | tail -${dif} > ${k8s_nodes}
+
+str_inc="localhost"
+for n in `openstack server list -f value -c Name | grep -E 'worker|bastian' | grep -vf ${k8s_nodes}`; do
+    echo -n "`date` Getting ${n} external IP... "
+    ext_ip=`openstack server show ${n} -f value -c addresses | grep  -oP '\d+\.\d+\.\d+\.\d+' | tail -1`
+    echo "${ext_ip} !"
+    str_inc="${str_inc},${ext_ip}"
+done
+
+# Update /etc/hosts in all nodes:
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts ansible-etc-hosts.yml 
+
+# Execute the ansible script only in the new nodes:
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts ansible-scale.yml --limit ${str_inc}
 
 

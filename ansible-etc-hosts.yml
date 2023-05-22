@@ -1,0 +1,20 @@
+    
+- hosts: localhost
+  tasks:
+    - include_vars: "{{ playbook_dir }}/vars.yml"
+    - name: Wait for connection
+      wait_for:
+        host: "{{ item }}"
+        port: 22
+        timeout: 3000
+      loop:
+        "{{ all_external }}"
+     
+- hosts: ALL
+  user: debian
+  become: true
+  roles:
+    - role: 02-etc-hosts 
+
+
+

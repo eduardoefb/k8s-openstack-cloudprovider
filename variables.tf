@@ -29,7 +29,7 @@ variable environment {
         prefix = "k8s"
         master_nodes = "1",
         master_az = "zone03",
-worker_nodes = "2",
+worker_nodes = "4",
         worker_az = "zone03",
         registry_nodes = "1",
         registry_az = "zone03"

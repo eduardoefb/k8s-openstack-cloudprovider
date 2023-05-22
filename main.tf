@@ -277,7 +277,7 @@ resource "openstack_compute_instance_v2" "registry" {
   count           = var.environment.registry_nodes
   name            = "${var.environment.prefix}-registry-${count.index}"
   flavor_name     = var.environment.registry_flavor
-  image_name      = var.environment.image
+  # image_name      = var.environment.image
   key_pair        = openstack_compute_keypair_v2.keypair.name
   availability_zone = var.environment.registry_az
   security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
@@ -285,7 +285,7 @@ resource "openstack_compute_instance_v2" "registry" {
     name = openstack_networking_network_v2.network.name
   }
 
-  /*
+  
   block_device {
     uuid                  = data.openstack_images_image_v2.image_01.id
     source_type           = "image"
@@ -293,7 +293,7 @@ resource "openstack_compute_instance_v2" "registry" {
     boot_index            = 0
     destination_type      = "volume"
     delete_on_termination = true
-  } */
+  } 
 
   depends_on = [
     openstack_networking_network_v2.network,
@@ -326,7 +326,7 @@ resource "openstack_compute_instance_v2" "nfs" {
   count           = var.environment.nfs_nodes
   name            = "${var.environment.prefix}-nfs-${count.index}"
   flavor_name     = var.environment.nfs_flavor
-  image_name      = var.environment.image
+  # image_name      = var.environment.image
   availability_zone = var.environment.nfs_az
   security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
   key_pair        = openstack_compute_keypair_v2.keypair.name
@@ -334,7 +334,6 @@ resource "openstack_compute_instance_v2" "nfs" {
     name = openstack_networking_network_v2.network.name
   }
   
-  /*
   block_device {
     uuid                  = data.openstack_images_image_v2.image_01.id
     source_type           = "image"
@@ -343,7 +342,6 @@ resource "openstack_compute_instance_v2" "nfs" {
     destination_type      = "volume"
     delete_on_termination = true
   }
-  */
 
   depends_on = [
     openstack_networking_network_v2.network,

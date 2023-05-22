@@ -1,0 +1,10 @@
+---
+# tasks file for 01-update
+  - include_vars: "{{ playbook_dir }}/vars.yml" 
+
+  - name: Update /etc/hosts
+    template:
+      src: etc_hosts.j2
+      dest: /etc/hosts
+
+  

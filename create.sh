@@ -188,9 +188,23 @@ function update_inventory(){
     echo "floating_network_id: `cat floating_network_id.txt`" >> vars.yml
 }
 
+function usage(){
+    echo "Usage:"
+    echo "${0} <Number of worker nodes>"
+    exit 1
+}
 
 export DOMAIN="k8so.int"
 export LB_PREFIX="k8so-lb"
+
+if [ -z "${1}" ]; then 
+    usage
+fi
+
+worker_nodes_str=`grep -P 'worker_nodes\s=\s\"\d+\"' variables.tf`
+
+# Replace the number of worker nodes in the terraform variables.tf file:
+sed -i "s|${worker_nodes_str}|worker_nodes = \"${1}\",|g" variables.tf
 
 if [ ! -d ssh_keys ]; then
     mkdir -p ssh_keys
