@@ -9,7 +9,29 @@ cd ..
 
 - Start the deployment
 ```shell
-bash create.sh -d
+bash create.sh <number of worker nodes>
+```
+
+#### Scale
+To scale, execute the `scale.sh` script by informing the new number of worker nodes:
+```shell
+bash scale.sh <number of worker nodes>
+```
+
+#### Replace a worker node:
+To replace a worker node, delete the worker node from the kubernetes cluster:
+```shell
+kubectl drain --ignore-daemonsets --delete-emptydir-data <worker node hostname>
+kubectl delete node <worker node hostname>
+```
+And than, redeploy the worker node using terraform apply --replace command:
+```shell
+terraform apply --replace openstack_compute_instance_v2.worker[0]
+```
+
+And last, execute the scale script with the current number of desired worker nodes:
+```shell
+bash scale.sh <number of worker nodes>
 ```
 
 ### After deployment, do some tests:
