@@ -19,12 +19,12 @@ bash scale.sh <number of worker nodes>
 ```
 
 #### Replace a worker node:
-To replace a worker node, delete the worker node from the kubernetes cluster:
+To replace a worker node, delete the worker node from the kubernetes cluster (example for worker-0):
 ```shell
-kubectl drain --ignore-daemonsets --delete-emptydir-data <worker node hostname>
-kubectl delete node <worker node hostname>
+kubectl drain --ignore-daemonsets --delete-emptydir-data <prefix>-worker-0
+kubectl delete node <prefix>-worker-0
 ```
-And than, redeploy the worker node using terraform apply --replace command:
+And than, redeploy the worker node using terraform apply --replace command (example for worker-0):
 ```shell
 terraform apply --replace openstack_compute_instance_v2.worker[0]
 ```
