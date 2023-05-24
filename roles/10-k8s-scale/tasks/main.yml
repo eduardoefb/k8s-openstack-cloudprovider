@@ -75,11 +75,11 @@
 
       k8sfp=`mktemp`
       osfp=`mktemp`
-      grep -P '\w+-worker-\d+' /tmp/hosts | sort > ${osfp}
-      kubectl get nodes -o custom-columns=NAME:.metadata.name | grep -P '\w+-worker-\d+' | grep -v "^NAME" | sort > ${k8sfp}
+      grep -P '\w+-worker-\d+' /tmp/hosts | sort -V > ${osfp}
+      kubectl get nodes -o custom-columns=NAME:.metadata.name | grep -P '\w+-worker-\d+' | grep -v "^NAME" | sort -V > ${k8sfp}
 
       limit_str=""
-      for i in `grep -vf ${k8sfp}  ${osfp}`; do
+      for i in `comm -23 <(sort -V ${osfp}) <(sort -V ${k8sfp})`; do
         limit_str=${limit_str},${i}
       done
       limit_str=$(sed 's|^,||g' <<< ${limit_str})
