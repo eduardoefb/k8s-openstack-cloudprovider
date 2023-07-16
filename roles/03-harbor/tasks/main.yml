@@ -22,6 +22,7 @@
         - docker.io 
         - containerd 
         - runc 
+        - docker-compose
       state: absent
     register: apt_res
     retries: 300

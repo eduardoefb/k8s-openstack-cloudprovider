@@ -9,27 +9,11 @@
         - python3-pip
         - git
         - buildah 
-        - snapd
         - python3-openstackclient
         - gnupg
         - software-properties-common
         - wget
         
-  - name: Install core
-    become: yes 
-    shell: "snap install core"
-
-  - name: Install juju
-    become: yes
-    shell: "snap install juju --classic --channel=3.0/stable"
-
-  - name: Create juju directory at Debian's home directory
-    file:
-      path: /home/debian/.local/share/juju
-      state: directory
-      owner: debian
-      group: debian
-
   - name: Create the openstack environment variables
     template:
       src: bashrc.j2
@@ -97,14 +81,24 @@
   - name: Clone kubestpray
     ansible.builtin.git:
       repo: 'https://github.com/kubernetes-sigs/kubespray.git'
-      dest: "{{ home_dir.stdout }}/deployment/kubespray"      
-      #version: release-2.21
-      version: master
-
+      dest: "{{ home_dir.stdout }}/deployment/kubespray"
+      # version: master
+      version: release-2.22
     register: apt_res
     retries: 300
     delay: 10
-    until: apt_res is success   
+    until: apt_res is success  
+
+  - name: Clear python files
+    file:
+      path: "/home/debian/.local/lib/{{ item }}"
+      state: absent
+    loop:
+       - python3.9
+       - python3.10
+       - python3.11
+       - python3.12
+       - python3.13
 
   - name: Install specified python requirements
     pip:

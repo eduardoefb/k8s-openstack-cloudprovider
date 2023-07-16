@@ -32,12 +32,12 @@ variable environment {
 worker_nodes = "4",
         worker_az = "zone03",
         registry_nodes = "1",
-        registry_az = "zone03"
+        registry_az = "zone01"
         nfs_nodes =  "1",
-        nfs_az = "zone03",
+        nfs_az = "zone01",
         image = "debian_11",
         bastian_flavor = "m1.medium",
-        bastian_az = "zone03",
+        bastian_az = "zone02",
         master_flavor = "m1.xlarge",
         worker_flavor = "m1.xlarge",
         nfs_flavor = "m1.medium",
