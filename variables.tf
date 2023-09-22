@@ -29,7 +29,7 @@ variable environment {
         prefix = "k8s"
         master_nodes = "1",
         master_az = "zone03",
-worker_nodes = "4",
+worker_nodes = "1",
         worker_az = "zone03",
         registry_nodes = "1",
         registry_az = "zone01"
@@ -37,7 +37,7 @@ worker_nodes = "4",
         nfs_az = "zone01",
         image = "debian_11",
         bastian_flavor = "m1.medium",
-        bastian_az = "zone02",
+        bastian_az = "zone03",
         master_flavor = "m1.xlarge",
         worker_flavor = "m1.xlarge",
         nfs_flavor = "m1.medium",

@@ -173,6 +173,7 @@ resource "openstack_compute_instance_v2" "bastian" {
   }
 
   depends_on = [
+    openstack_compute_instance_v2.worker,
     openstack_networking_network_v2.network,
     openstack_networking_subnet_v2.subnet,
     openstack_networking_router_interface_v2.router_interface_01
@@ -209,7 +210,7 @@ resource "openstack_compute_instance_v2" "master" {
     name = openstack_networking_network_v2.network.name
   }
 
-  depends_on = [
+  depends_on = [    
     openstack_networking_network_v2.network,
     openstack_networking_subnet_v2.subnet,
     openstack_networking_router_interface_v2.router_interface_01
@@ -248,6 +249,7 @@ resource "openstack_compute_instance_v2" "worker" {
   }
 
   depends_on = [
+    openstack_compute_instance_v2.master,    
     openstack_networking_network_v2.network,
     openstack_networking_subnet_v2.subnet,
     openstack_networking_router_interface_v2.router_interface_01
@@ -300,7 +302,8 @@ resource "openstack_compute_instance_v2" "registry" {
   depends_on = [
     openstack_networking_network_v2.network,
     openstack_networking_subnet_v2.subnet,
-    openstack_networking_router_interface_v2.router_interface_01
+    openstack_networking_router_interface_v2.router_interface_01,
+    openstack_compute_instance_v2.bastian
   ]
 }
 
@@ -348,7 +351,8 @@ resource "openstack_compute_instance_v2" "nfs" {
   depends_on = [
     openstack_networking_network_v2.network,
     openstack_networking_subnet_v2.subnet,
-    openstack_networking_router_interface_v2.router_interface_01
+    openstack_networking_router_interface_v2.router_interface_01,  
+    openstack_compute_instance_v2.registry
   ]
 }
 
@@ -376,7 +380,8 @@ resource "openstack_lb_loadbalancer_v2" "lb" {
   name          = "${var.environment.prefix}-lb"
   vip_subnet_id = openstack_networking_subnet_v2.subnet.id
   depends_on = [
-    openstack_networking_subnet_v2.subnet
+    openstack_networking_subnet_v2.subnet,
+    openstack_compute_instance_v2.nfs
   ]
 }
 

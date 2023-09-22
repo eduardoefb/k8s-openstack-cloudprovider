@@ -213,7 +213,7 @@ fi
 if [ ! -f ssh_keys/id_rsa -o ! -f ssh_keys/id_rsa.pub ]; then
     ssh-keygen -t rsa -f ssh_keys/id_rsa -N ''
 fi
-export TF_LOG=TRACE
+# export TF_LOG=TRACE
 if [ "${1}" == "-d" ]; then
     delete_script=`mktemp`
     kubectl get services -A | grep LoadBalancer | awk '{print "kubectl -n "$1" delete service "$2}' > ${delete_script}

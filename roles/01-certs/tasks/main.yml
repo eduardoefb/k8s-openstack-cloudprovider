@@ -22,7 +22,6 @@
   - name: Create the host certificates
     shell: |        
       cd {{ playbook_dir }}/certs
-
       
       openssl genrsa -out {{ item.name }}.{{ domain }}.key 2048
       

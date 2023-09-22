@@ -6,7 +6,7 @@ all:
         access_ip: {{ m.ip }}
         ansible_host: {{ m.ip }}
 {% endfor %}
-{% for m in master %}
+{% for m in worker %}
     {{ m.name }}:
         ip: {{ m.ip }}
         access_ip: {{ m.ip }}
