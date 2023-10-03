@@ -68,6 +68,7 @@
           - containerd.io
           - docker-buildx-plugin
           - docker-compose-plugin
+          - docker-compose
         state: latest
     register: apt_res
     retries: 300
