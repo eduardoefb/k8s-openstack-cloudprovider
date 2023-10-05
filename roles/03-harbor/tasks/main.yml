@@ -175,3 +175,22 @@
       flat: yes
 
 
+  - name: Create service file
+    template:
+      src: harbor_service.j2  # Template file for the systemd service
+      dest: /etc/systemd/system/harbor_service.service
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Reload systemd
+    systemd:
+      daemon_reload: yes           
+
+
+  - name: Restart harbor_service
+    systemd:
+      name: harbor_service 
+      state: restarted
+      enabled: yes 
+
