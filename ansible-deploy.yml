@@ -89,5 +89,5 @@
     - role: 07-cloud-controller-manager
     - role: 08-nfs-storageclass    
     - role: 09-istio
-      when: install_istio  == "yes"
+      when: run_istio  == "yes"
       
