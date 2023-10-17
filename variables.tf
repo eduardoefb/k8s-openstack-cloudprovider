@@ -24,22 +24,23 @@ variable environment {
                      registry_flavor = string,
                      domain = string,
                      master_flavor = string,
-                     worker_flavor = string})
+                     worker_flavor = string                   
+                     })
     default = {
         prefix = "k8s"
         master_nodes = "1",
-        master_az = "zone03",
-worker_nodes = "2",
-        worker_az = "zone03",
-        registry_nodes = "1",
-        registry_az = "zone01"
+        master_az = "zone2",
+        worker_nodes = "6",
+        worker_az = "zone2",
+        registry_nodes = "0",
+        registry_az = "zone1",
         nfs_nodes =  "1",
-        nfs_az = "zone01",
+        nfs_az = "zone1",
         image = "debian_11",
         bastian_flavor = "m1.medium",
-        bastian_az = "zone03",
+        bastian_az = "zone1",
         master_flavor = "m1.xlarge",
-        worker_flavor = "m1.xlarge",
+        worker_flavor = "m2.xlarge",
         nfs_flavor = "m1.medium",
         registry_flavor = "m1.medium",
         public_key = "ssh_keys/id_rsa.pub",
@@ -51,7 +52,7 @@ worker_nodes = "2",
         external_network = "lb",
         external_subnet = "lb",
         lb_network = "lb",
-        lb_subnet = "lb"        
+        lb_subnet = "lb"    
     }
 }
 

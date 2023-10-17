@@ -1,0 +1,21 @@
+---
+# tasks file for 06-ingress
+# Reference: https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/octavia-ingress-controller/using-octavia-ingress-controller.md
+  - include_vars: "{{ playbook_dir }}/vars.yml"  
+
+  - name: Clear directory
+    file:
+      path: /home/debian/multus-cni
+      state: absent
+      
+  - name: Clone multus-cni repository
+    git:
+      repo: https://github.com/k8snetworkplumbingwg/multus-cni.git
+      dest: /home/debian/multus-cni
+      version: release-3.7
+      
+  - name: Apply multus-daemonset.yml using kubectl
+    shell: |
+      cd /home/debian/multus-cni
+      cat ./images/multus-daemonset.yml | kubectl apply -f -  
+

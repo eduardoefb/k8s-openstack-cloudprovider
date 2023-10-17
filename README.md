@@ -1,3 +1,4 @@
+
 #### Deploy
 - Create ssh keys:
 ```shell
@@ -9,8 +10,9 @@ cd ..
 
 - Start the deployment
 ```shell
-bash create.sh <number of worker nodes>
+bash create.sh --controller_nodes <x> --worker_nodes <y> [--no_harbor]
 ```
+Note: Use the option `--no_harbor` if you don't want to deploy the image/helm registry
 
 #### Scale
 To scale, execute the `scale.sh` script by informing the new number of worker nodes:

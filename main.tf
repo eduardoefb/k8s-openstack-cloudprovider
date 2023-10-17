@@ -9,7 +9,6 @@ required_version = ">= 0.14.0"
   }
 }
 
-
 resource "openstack_networking_network_v2" "network" {
   name = "${var.environment.prefix}_int_net"
 }
@@ -20,13 +19,13 @@ resource "openstack_networking_subnet_v2" "subnet" {
   cidr            = var.environment.internal_subnet_cidr
   gateway_ip      = var.environment.internal_subnet_gw
   dns_nameservers = var.environment.dns_nameservers
-
 }
 
 resource "openstack_compute_keypair_v2" "keypair" {
   name          = "${var.environment.prefix}"
   public_key    = file(var.environment.public_key)
 }
+
 
 data "openstack_networking_network_v2" "ext_net"{
   name = var.environment.external_network
@@ -87,6 +86,13 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_tcp" {
   security_group_id = "${openstack_networking_secgroup_v2.k8s_secgroup.id}"
 }
 
+resource "openstack_networking_secgroup_rule_v2" "k8s_icmp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "icmp"
+  security_group_id = openstack_networking_secgroup_v2.k8s_secgroup.id
+}
+
 resource "openstack_networking_secgroup_rule_v2" "k8s_udp" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -127,50 +133,30 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_sctp2" {
   security_group_id = "${openstack_networking_secgroup_v2.k8s_secgroup.id}"
 }
 
-# Security group (for now, everything is open)
-/*
-resource "openstack_compute_secgroup_v2" "secgroup" {
-  name        = "${var.environment.prefix}-secgroup"
-  description = "secgroup"
-  
-  rule {
-    from_port   = 22
-    to_port     = 65535
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"    
-  }
 
-  rule {
-    from_port   = 22
-    to_port     = 65535
-    ip_protocol = "udp"
-    cidr        = "0.0.0.0/0"    
-  }  
-
-  
-  rule {
-    from_port   = -1
-    to_port     = -1
-    ip_protocol = "icmp"
-    cidr        = "0.0.0.0/0"
-    #cidr        = var.environment.internal_subnet_cidr
-  }  
-}
-
-*/
 #########################################################################################################
 #     Bastian node
 #########################################################################################################
 resource "openstack_compute_instance_v2" "bastian" {
   name            = "${var.environment.prefix}-bastian"
   flavor_name     = var.environment.bastian_flavor
-  image_name      = var.environment.image
+  #image_name      = var.environment.image
   key_pair        = openstack_compute_keypair_v2.keypair.name
   availability_zone = var.environment.bastian_az
+      
   security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name ]
   network {
     name = openstack_networking_network_v2.network.name
   }
+
+  block_device {
+    uuid                  = data.openstack_images_image_v2.image_01.id
+    source_type           = "image"
+    volume_size           = 300
+    boot_index            = 0
+    destination_type      = "volume"
+    delete_on_termination = true
+  } 
 
   depends_on = [
     openstack_compute_instance_v2.worker,
@@ -236,6 +222,7 @@ resource "openstack_compute_floatingip_associate_v2" "master_floating_ip_associa
 #########################################################################################################
 # Worker nodes
 #########################################################################################################
+
 resource "openstack_compute_instance_v2" "worker" {
   count           = var.environment.worker_nodes
   name            = "${var.environment.prefix}-worker-${count.index}"
@@ -244,6 +231,7 @@ resource "openstack_compute_instance_v2" "worker" {
   key_pair        = openstack_compute_keypair_v2.keypair.name
   availability_zone = var.environment.worker_az
   security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name ]
+
   network {
     name = openstack_networking_network_v2.network.name
   }
@@ -293,7 +281,7 @@ resource "openstack_compute_instance_v2" "registry" {
   block_device {
     uuid                  = data.openstack_images_image_v2.image_01.id
     source_type           = "image"
-    volume_size           = 80
+    volume_size           = 120
     boot_index            = 0
     destination_type      = "volume"
     delete_on_termination = true

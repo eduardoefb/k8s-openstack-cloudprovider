@@ -85,6 +85,9 @@
   user: debian
   roles:
     - role: 06-ingress
+    - role: 06-1-multus
     - role: 07-cloud-controller-manager
     - role: 08-nfs-storageclass    
     - role: 09-istio
+      when: install_istio  == "yes"
+      

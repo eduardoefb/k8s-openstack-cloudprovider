@@ -166,7 +166,7 @@
       state: restarted
 
   - name: Execute harbor installation
-    shell: /opt/harbor/install.sh      
+    shell: /opt/harbor/install.sh --with-notary --with-chartmuseum      
 
   - name: Get harbor config file
     fetch:

@@ -96,12 +96,19 @@ function update_inventory(){
     echo >> vars.yml
     echo >> hosts
     echo "[REGISTRY]" >> hosts
-    echo "registry:" >> vars.yml
-    for (( i=0; i<${#registry_name[@]}; i++)); do
-        echo ${registry_ext[i]} >> hosts 
-        echo "  - name: ${registry_name[i]}" >> vars.yml
-        echo "    ip: ${registry_int[i]}" >> vars.yml
-    done
+
+    echo "registry:" >> vars.yml    
+    if grep 'registry_nodes = "0"' variables.tf &>/dev/null; then
+        echo "  - name: registry.null.int" >> vars.yml
+        echo "    ip: 0.0.0.0" >> vars.yml 
+    else 
+        for (( i=0; i<${#registry_name[@]}; i++)); do
+            echo ${registry_ext[i]} >> hosts 
+            echo "  - name: ${registry_name[i]}" >> vars.yml
+            echo "    ip: ${registry_int[i]}" >> vars.yml
+        done   
+    fi
+
     echo >> vars.yml
     echo >> hosts
     echo "[ALL]" >> hosts 
@@ -186,6 +193,16 @@ function update_inventory(){
     echo >> vars.yml
     echo "internal_subnet_id: `cat internal_subnet_id.txt`" >> vars.yml
     echo "floating_network_id: `cat floating_network_id.txt`" >> vars.yml
+
+    if [ -f trusted_ca_list ]; then
+        echo "trusted_ca_list:" >> vars.yml
+        for ca in `cat trusted_ca_list`; do            
+            echo "  - name: `openssl rand -hex 5`.crt" >> vars.yml
+            echo "    src_file_name: ${ca}" >> vars.yml
+        done
+    else
+        echo "trusted_ca_list: []" >> vars.yml
+    fi
 }
 
 function usage(){
@@ -219,8 +236,9 @@ fi
 worker_nodes_str=`grep -P 'worker_nodes\s=\s\"\d+\"' variables.tf`
 
 actual_worker_nodes=`kubectl get nodes -o custom-columns=NAME:.metadata.name | grep -P '\w+-worker-\d+' | grep -v "^NAME"  | wc -l`
+
 # Replace the number of worker nodes in the terraform variables.tf file:
-sed -i "s|${worker_nodes_str}|worker_nodes = \"${1}\",|g" variables.tf
+sed -i "s|${worker_nodes_str}|\ \ \ \ \ \ \ \ worker_nodes = \"${1}\",|g" variables.tf
 
 # Remove worker nodes in case of scale in:
 scale=${1}

@@ -96,12 +96,20 @@ function update_inventory(){
     echo >> vars.yml
     echo >> hosts
     echo "[REGISTRY]" >> hosts
+
+
     echo "registry:" >> vars.yml
-    for (( i=0; i<${#registry_name[@]}; i++)); do
-        echo ${registry_ext[i]} >> hosts 
-        echo "  - name: ${registry_name[i]}" >> vars.yml
-        echo "    ip: ${registry_int[i]}" >> vars.yml
-    done
+    if [ ${CREATE_HARBOR} -gt 0 ]; then        
+        for (( i=0; i<${#registry_name[@]}; i++)); do
+            echo ${registry_ext[i]} >> hosts 
+            echo "  - name: ${registry_name[i]}" >> vars.yml
+            echo "    ip: ${registry_int[i]}" >> vars.yml
+        done
+    else
+        echo "  - name: registry.null.int" >> vars.yml
+        echo "    ip: 0.0.0.0" >> vars.yml    
+    fi
+
     echo >> vars.yml
     echo >> hosts
     echo "[ALL]" >> hosts 
@@ -129,7 +137,8 @@ function update_inventory(){
         echo ${registry_ext[i]} >> hosts 
         echo "  - name: ${registry_name[i]}" >> vars.yml
         echo "    ip: ${registry_int[i]}" >> vars.yml
-    done    
+    done
+
     echo >> vars.yml
     echo "all_external:" >> vars.yml
     for (( i=0; i<${#master_name[@]}; i++)); do
@@ -147,11 +156,12 @@ function update_inventory(){
     for (( i=0; i<${#registry_name[@]}; i++)); do
         echo "  - ${registry_ext[i]}" >> vars.yml
     done  
+
     echo "  - ${bastian_ext}" >> vars.yml
 
     echo >> vars.yml
     echo "int_net: `cat int_network.txt`" >> vars.yml
-    echo "domain: `cat domain.txt | sed 's/.$//g'`" >> vars.yml
+    echo "domain: `cat domain.txt | sed 's/.$//g'`" >> vars.yml    
     echo "registry_fqdn: registry.`cat domain.txt | sed 's/.$//g'`"  >> vars.yml
     echo "nfs_fqdn: nfs.`cat domain.txt | sed 's/.$//g'`"  >> vars.yml
     echo "c: C=BR"  >> vars.yml
@@ -186,25 +196,72 @@ function update_inventory(){
     echo >> vars.yml
     echo "internal_subnet_id: `cat internal_subnet_id.txt`" >> vars.yml
     echo "floating_network_id: `cat floating_network_id.txt`" >> vars.yml
+
+    if [ -f trusted_ca_list ]; then
+        echo "trusted_ca_list:" >> vars.yml
+        for ca in `cat trusted_ca_list`; do            
+            echo "  - name: `openssl rand -hex 5`.crt" >> vars.yml
+            echo "    src_file_name: ${ca}" >> vars.yml
+        done
+    else
+        echo "trusted_ca_list: []" >> vars.yml
+    fi
 }
 
 function usage(){
     echo "Usage:"
-    echo "${0} <Number of worker nodes>"
+    echo "${0} --controller_nodes <x> --worker_nodes <y> [--no_harbor] [--no_istio]" 
     exit 1
 }
 
 export DOMAIN="k8so.int"
 export LB_PREFIX="k8so-lb"
 
-if [ -z "${1}" ]; then 
+if [ -z "${1}" ]; then
     usage
-fi
+fi 
+
+export CREATE_HARBOR=1
+export CREATE_ISTIO=1
+echo $@
+while [[ $# -gt 0 ]]
+do
+    key="$1"
+    case $key in
+        --controller_nodes)
+            MASTER_NODES="$2"
+            shift
+            ;;
+        --worker_nodes)
+            WORKER_NODES="$2"
+            shift
+            ;;
+        --no_harbor) 
+            export CREATE_HARBOR=0            
+            ;;   
+        --no_istio)            
+            export CREATE_ISTIO=0            
+            ;;                        
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+    shift
+done
 
 worker_nodes_str=`grep -P 'worker_nodes\s=\s\"\d+\"' variables.tf`
+master_nodes_str=`grep -P 'master_nodes\s=\s\"\d+\"' variables.tf`
 
 # Replace the number of worker nodes in the terraform variables.tf file:
-sed -i "s|${worker_nodes_str}|worker_nodes = \"${1}\",|g" variables.tf
+sed -i "s|${worker_nodes_str}|\ \ \ \ \ \ \ \ worker_nodes = \"${WORKER_NODES}\",|g" variables.tf
+sed -i "s|${master_nodes_str}|\ \ \ \ \ \ \ \ master_nodes = \"${MASTER_NODES}\",|g" variables.tf
+
+if [ ${CREATE_HARBOR} -eq 1 ]; then 
+    sed -i 's/registry_nodes = "[0-9]\+",/registry_nodes = "1",/' variables.tf
+else
+    sed -i 's/registry_nodes = "[0-9]\+",/registry_nodes = "0",/' variables.tf
+fi
 
 if [ ! -d ssh_keys ]; then
     mkdir -p ssh_keys
@@ -230,7 +287,11 @@ sed -i '/^$/d' *.txt
 
 update_inventory
 
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts ansible-deploy.yml
+if [ ${CREATE_ISTIO} -eq 1 ]; then 
+    ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts ansible-deploy.yml --extra-vars 'run_istio="yes"'
+else
+    ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts ansible-deploy.yml --extra-vars 'run_istio="no"'
+fi
 
 mkdir -p ~/.kube
 cp files/kubeconfig ~/.kube/config
