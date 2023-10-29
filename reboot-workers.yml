@@ -1,0 +1,19 @@
+
+
+- hosts: WORKER
+  user: debian
+  #gather_facts: no
+  #serial: 1
+  become: yes
+  tasks:
+    - name: reboot
+      reboot:
+        msg: Reboot
+        reboot_timeout: 3600
+
+    - name: Wait for worker to come back online
+      wait_for:
+        host: "{{ inventory_hostname }}"
+        port: 22
+        state: started
+        timeout: 300 

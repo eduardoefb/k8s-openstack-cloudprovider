@@ -250,18 +250,27 @@ do
     shift
 done
 
-worker_nodes_str=`grep -P 'worker_nodes\s=\s\"\d+\"' variables.tf`
-master_nodes_str=`grep -P 'master_nodes\s=\s\"\d+\"' variables.tf`
-
-# Replace the number of worker nodes in the terraform variables.tf file:
-sed -i "s|${worker_nodes_str}|\ \ \ \ \ \ \ \ worker_nodes = \"${WORKER_NODES}\",|g" variables.tf
-sed -i "s|${master_nodes_str}|\ \ \ \ \ \ \ \ master_nodes = \"${MASTER_NODES}\",|g" variables.tf
-
-if [ ${CREATE_HARBOR} -eq 1 ]; then 
-    sed -i 's/registry_nodes = "[0-9]\+",/registry_nodes = "1",/' variables.tf
-else
-    sed -i 's/registry_nodes = "[0-9]\+",/registry_nodes = "0",/' variables.tf
+# Check if variables exists. If yes, abort
+if [ -f variables.tf ]; then 
+    echo "Cluster already exists. Delete it first!"
+    exit 1
 fi
+
+# Master nodes:
+sed "s|#MASTER_NODES#|${MASTER_NODES}|g" variables.tf.template > variables.tf
+
+# Worker nodes:
+sed -i "s|#WORKER_NODES#|${WORKER_NODES}|g" variables.tf
+
+# Registry:
+if [ ${CREATE_HARBOR} -eq 1 ]; then 
+    sed -i "s|#REGISTRY_NODES#|1|g" variables.tf
+else
+    sed -i "s|#REGISTRY_NODES#|0|g" variables.tf
+fi
+
+# NFS (for now, only 1):
+sed -i "s|#NFS_NODES#|1|g" variables.tf
 
 if [ ! -d ssh_keys ]; then
     mkdir -p ssh_keys

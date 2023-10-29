@@ -26,7 +26,6 @@ resource "openstack_compute_keypair_v2" "keypair" {
   public_key    = file(var.environment.public_key)
 }
 
-
 data "openstack_networking_network_v2" "ext_net"{
   name = var.environment.external_network
 }
@@ -60,8 +59,8 @@ resource "openstack_networking_router_v2" "router" {
 }
 
 resource "openstack_networking_router_interface_v2" "router_interface_01" {
-  router_id = openstack_networking_router_v2.router.id
-  subnet_id = openstack_networking_subnet_v2.subnet.id
+  router_id  = openstack_networking_router_v2.router.id
+  subnet_id  = openstack_networking_subnet_v2.subnet.id
 
   depends_on = [
       openstack_networking_subnet_v2.subnet,
@@ -138,13 +137,12 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_sctp2" {
 #     Bastian node
 #########################################################################################################
 resource "openstack_compute_instance_v2" "bastian" {
-  name            = "${var.environment.prefix}-bastian"
-  flavor_name     = var.environment.bastian_flavor
-  #image_name      = var.environment.image
-  key_pair        = openstack_compute_keypair_v2.keypair.name
+  name              = "${var.environment.prefix}-bastian"
+  flavor_name       = var.environment.bastian_flavor  
+  key_pair          = openstack_compute_keypair_v2.keypair.name
   availability_zone = var.environment.bastian_az
       
-  security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name ]
+  security_groups   = [ openstack_networking_secgroup_v2.k8s_secgroup.name ]
   network {
     name = openstack_networking_network_v2.network.name
   }
@@ -159,6 +157,7 @@ resource "openstack_compute_instance_v2" "bastian" {
   } 
 
   depends_on = [
+    openstack_lb_loadbalancer_v2.lb,
     openstack_compute_instance_v2.worker,
     openstack_networking_network_v2.network,
     openstack_networking_subnet_v2.subnet,
@@ -168,7 +167,7 @@ resource "openstack_compute_instance_v2" "bastian" {
 
 # Create a list of floating IPs
 resource "openstack_networking_floatingip_v2" "bastian_floating_ip" {
-  pool  = var.environment.external_network
+  pool      = var.environment.external_network
   subnet_id = data.openstack_networking_subnet_v2.ext_sub_net.id
 }
 
@@ -185,18 +184,19 @@ resource "openstack_compute_floatingip_associate_v2" "bastian_floating_ip_associ
 #     Master nodes
 #########################################################################################################
 resource "openstack_compute_instance_v2" "master" {
-  count           = var.environment.master_nodes
-  name            = "${var.environment.prefix}-master-${count.index}"
-  flavor_name     = var.environment.master_flavor
-  image_name      = var.environment.image
-  key_pair        = openstack_compute_keypair_v2.keypair.name
+  count             = var.environment.master_nodes
+  name              = "${var.environment.prefix}-master-${count.index}"
+  flavor_name       = var.environment.master_flavor
+  image_name        = var.environment.image
+  key_pair          = openstack_compute_keypair_v2.keypair.name
   availability_zone = var.environment.master_az
-  security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
+  security_groups   = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
   network {
     name = openstack_networking_network_v2.network.name
   }
 
-  depends_on = [    
+  depends_on = [   
+    openstack_lb_loadbalancer_v2.lb, 
     openstack_networking_network_v2.network,
     openstack_networking_subnet_v2.subnet,
     openstack_networking_router_interface_v2.router_interface_01
@@ -205,8 +205,8 @@ resource "openstack_compute_instance_v2" "master" {
 
 # Create a list of floating IPs
 resource "openstack_networking_floatingip_v2" "master_floating_ip" {
-  count = var.environment.master_nodes
-  pool  = var.environment.external_network
+  count     = var.environment.master_nodes
+  pool      = var.environment.external_network
   subnet_id = data.openstack_networking_subnet_v2.ext_sub_net.id
 }
 
@@ -224,19 +224,20 @@ resource "openstack_compute_floatingip_associate_v2" "master_floating_ip_associa
 #########################################################################################################
 
 resource "openstack_compute_instance_v2" "worker" {
-  count           = var.environment.worker_nodes
-  name            = "${var.environment.prefix}-worker-${count.index}"
-  flavor_name     = var.environment.worker_flavor
-  image_name      = var.environment.image
-  key_pair        = openstack_compute_keypair_v2.keypair.name
+  count             = var.environment.worker_nodes
+  name              = "${var.environment.prefix}-worker-${count.index}"
+  flavor_name       = var.environment.worker_flavor
+  image_name        = var.environment.image
+  key_pair          = openstack_compute_keypair_v2.keypair.name
   availability_zone = var.environment.worker_az
-  security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name ]
+  security_groups   = [ openstack_networking_secgroup_v2.k8s_secgroup.name ]
 
   network {
     name = openstack_networking_network_v2.network.name
   }
 
   depends_on = [
+    openstack_lb_loadbalancer_v2.lb,
     openstack_compute_instance_v2.master,    
     openstack_networking_network_v2.network,
     openstack_networking_subnet_v2.subnet,
@@ -269,7 +270,6 @@ resource "openstack_compute_instance_v2" "registry" {
   count           = var.environment.registry_nodes
   name            = "${var.environment.prefix}-registry-${count.index}"
   flavor_name     = var.environment.registry_flavor
-  # image_name      = var.environment.image
   key_pair        = openstack_compute_keypair_v2.keypair.name
   availability_zone = var.environment.registry_az
   security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
@@ -288,6 +288,7 @@ resource "openstack_compute_instance_v2" "registry" {
   } 
 
   depends_on = [
+    openstack_lb_loadbalancer_v2.lb,
     openstack_networking_network_v2.network,
     openstack_networking_subnet_v2.subnet,
     openstack_networking_router_interface_v2.router_interface_01,
@@ -297,8 +298,8 @@ resource "openstack_compute_instance_v2" "registry" {
 
 # Create a list of floating IPs
 resource "openstack_networking_floatingip_v2" "registry_floating_ip" {
-  count = var.environment.registry_nodes
-  pool  = var.environment.external_network
+  count     = var.environment.registry_nodes
+  pool      = var.environment.external_network
   subnet_id = data.openstack_networking_subnet_v2.ext_sub_net.id
 }
 
@@ -316,13 +317,13 @@ resource "openstack_compute_floatingip_associate_v2" "registry_floating_ip_assoc
 #########################################################################################################
 
 resource "openstack_compute_instance_v2" "nfs" {
-  count           = var.environment.nfs_nodes
-  name            = "${var.environment.prefix}-nfs-${count.index}"
-  flavor_name     = var.environment.nfs_flavor
+  count             = var.environment.nfs_nodes
+  name              = "${var.environment.prefix}-nfs-${count.index}"
+  flavor_name       = var.environment.nfs_flavor
   # image_name      = var.environment.image
   availability_zone = var.environment.nfs_az
-  security_groups = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
-  key_pair        = openstack_compute_keypair_v2.keypair.name
+  security_groups   = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
+  key_pair          = openstack_compute_keypair_v2.keypair.name
   network {
     name = openstack_networking_network_v2.network.name
   }
@@ -337,6 +338,7 @@ resource "openstack_compute_instance_v2" "nfs" {
   }
 
   depends_on = [
+    openstack_lb_loadbalancer_v2.lb,
     openstack_networking_network_v2.network,
     openstack_networking_subnet_v2.subnet,
     openstack_networking_router_interface_v2.router_interface_01,  
@@ -346,8 +348,8 @@ resource "openstack_compute_instance_v2" "nfs" {
 
 # Create a list of floating IPs
 resource "openstack_networking_floatingip_v2" "nfs_floating_ip" {
-  count = var.environment.nfs_nodes
-  pool  = var.environment.external_network
+  count     = var.environment.nfs_nodes
+  pool      = var.environment.external_network
   subnet_id = data.openstack_networking_subnet_v2.ext_sub_net.id
 }
 
@@ -365,11 +367,10 @@ resource "openstack_compute_floatingip_associate_v2" "nfs_floating_ip_associate"
 #########################################################################################################
 
 resource "openstack_lb_loadbalancer_v2" "lb" {
-  name          = "${var.environment.prefix}-lb"
-  vip_subnet_id = openstack_networking_subnet_v2.subnet.id
-  depends_on = [
-    openstack_networking_subnet_v2.subnet,
-    openstack_compute_instance_v2.nfs
+  name              = "${var.environment.prefix}-lb"
+  vip_subnet_id     = openstack_networking_subnet_v2.subnet.id
+  depends_on        = [
+      openstack_networking_subnet_v2.subnet      
   ]
 }
 
@@ -397,6 +398,7 @@ resource "openstack_lb_member_v2" "member" {
   address    = element(openstack_compute_instance_v2.master.*.access_ip_v4, count.index)
   protocol_port = 6443
   depends_on = [
+    openstack_lb_loadbalancer_v2.lb,
     openstack_lb_pool_v2.pool,
     openstack_compute_instance_v2.master,
   ]

@@ -3,10 +3,13 @@
 # Reference: https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/octavia-ingress-controller/using-octavia-ingress-controller.md
   - include_vars: "{{ playbook_dir }}/vars.yml"  
 
-  - name: Clear directory
+  - name: Clear directories
     file:
-      path: /home/debian/multus-cni
+      path: "{{ item }}"
       state: absent
+    loop:
+      - /home/debian/multus-cni
+      - /home/debian/whereabouts
       
   - name: Clone multus-cni repository
     git:
@@ -14,8 +17,31 @@
       dest: /home/debian/multus-cni
       version: release-3.7
       
-  - name: Apply multus-daemonset.yml using kubectl
+  - name: Apply multus installation
     shell: |
       cd /home/debian/multus-cni
       cat ./images/multus-daemonset.yml | kubectl apply -f -  
+  
+  - name: Clone whereabouts repository
+    git:
+      repo: https://github.com/k8snetworkplumbingwg/whereabouts
+      dest: /home/debian/whereabouts
+      version: v0.6.2
+  
+  - name: Apply whereabouts installation
+    shell: |
+      cd /home/debian/whereabouts
+      kubectl apply \
+          -f doc/crds/daemonset-install.yaml \
+          -f doc/crds/whereabouts.cni.cncf.io_ippools.yaml \
+          -f doc/crds/whereabouts.cni.cncf.io_overlappingrangeipreservations.yaml    
+
+  - name: Cleanup
+    file:
+      path: "{{ item }}"
+      state: absent
+    loop:
+      - /home/debian/multus-cni
+      - /home/debian/whereabouts        
+
 

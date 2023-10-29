@@ -26,6 +26,9 @@ ff02::3 ip6-allhosts
 {% for i in nfs %}
 {{ i.ip }} {{ i.name }}
 {% endfor %}
+
+{% if registry is not none %}
 {% for i in registry %}
 {{ i.ip }} {{ i.name }}
 {% endfor %}
+{% endif %}

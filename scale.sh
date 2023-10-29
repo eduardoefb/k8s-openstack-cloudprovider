@@ -233,12 +233,17 @@ if [ "${1}" == "-d" ]; then
     terraform destroy --auto-approve
 fi
 
-worker_nodes_str=`grep -P 'worker_nodes\s=\s\"\d+\"' variables.tf`
+# Check k8s connection:
+if ! timeout 10 kubectl get pods &>/dev/null; then 
+    echo "k8s api is not working!"
+    exit 1
+fi
 
 actual_worker_nodes=`kubectl get nodes -o custom-columns=NAME:.metadata.name | grep -P '\w+-worker-\d+' | grep -v "^NAME"  | wc -l`
 
 # Replace the number of worker nodes in the terraform variables.tf file:
-sed -i "s|${worker_nodes_str}|\ \ \ \ \ \ \ \ worker_nodes = \"${1}\",|g" variables.tf
+sed -i -E "s/worker_nodes[[:space:]]*=[[:space:]]*\"[0-9]+\",/worker_nodes         = \"${1}\",/"  variables.tf
+
 
 # Remove worker nodes in case of scale in:
 scale=${1}
