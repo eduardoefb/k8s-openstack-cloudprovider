@@ -17,21 +17,21 @@
   - name: Create the openstack environment variables
     template:
       src: bashrc.j2
-      dest: /home/debian/.bashrc
-      owner: debian
-      group: debian
+      dest: /home/ubuntu/.bashrc
+      owner: ubuntu
+      group: ubuntu
   
   - name: Create the certificate dir
     file:
-      path: /home/debian/openstack_ca
+      path: /home/ubuntu/openstack_ca
       state: directory
-      owner: debian
-      group: debian
+      owner: ubuntu
+      group: ubuntu
   
   - name: Copy the openstack certificate
     copy:
       src: "{{ openstack.cacert }}"
-      dest: /home/debian/openstack_ca/rootCA.pem
+      dest: /home/ubuntu/openstack_ca/rootCA.pem
 
   - name: Install podman
     become: yes
@@ -91,7 +91,7 @@
 
   - name: Clear python files
     file:
-      path: "/home/debian/.local/lib/{{ item }}"
+      path: "/home/ubuntu/.local/lib/{{ item }}"
       state: absent
     loop:
        - python3.9
@@ -124,7 +124,7 @@
       cd {{ home_dir.stdout }}/deployment/kubespray
       cp -rfp inventory/sample inventory/mycluster
       cd
-      chown -R debian:debian {{ home_dir.stdout }}/deployment/kubespray       
+      chown -R ubuntu:ubuntu {{ home_dir.stdout }}/deployment/kubespray       
   
   - name: Configure init script
     template:
@@ -143,22 +143,22 @@
       src: all.yaml.j2
       dest: "{{ home_dir.stdout }}/deployment/kubespray/inventory/mycluster/group_vars/all/all.yml"
       mode: "0644"
-      owner: debian
-      group: debian
+      owner: ubuntu
+      group: ubuntu
 
   - name: Templates hosts.yaml.j2 
     template:
       src: hosts.yaml.j2
       dest: "{{ home_dir.stdout }}/deployment/kubespray/inventory/mycluster/hosts.yaml"
       mode: "0644"
-      owner: debian
-      group: debian
+      owner: ubuntu
+      group: ubuntu
 
   - name: Change values
     shell: |    
       sed -i 's/container_manager: docker/container_manager: containerd/g' {{ home_dir.stdout }}/deployment/kubespray/inventory/mycluster/group_vars/k8s_cluster/k8s-cluster.yml
       sed -i 's/etcd_deployment_type: docker/etcd_deployment_type: host/g' {{ home_dir.stdout }}/deployment/kubespray/inventory/mycluster/group_vars/etcd.yml
-      chown -R debian:debian {{ home_dir.stdout }}/deployment/kubespray         
+      chown -R ubuntu:ubuntu {{ home_dir.stdout }}/deployment/kubespray         
 
   - name: Copy the workaround file
     copy:

@@ -11,14 +11,14 @@
         "{{ all_external }}"
      
 
-- hosts: ALL
-  user: debian
+- hosts: WORKER
+  user: ubuntu
   become: true
   roles:
     - role: 02-update 
 
 - hosts: BASTIAN
-  user: debian  
+  user: ubuntu  
   roles:
     - role: 10-k8s-scale
 

@@ -46,6 +46,12 @@ data openstack_images_image_v2 image_01 {
   name = var.environment.image
 }
 
+data openstack_images_image_v2 image_02 {
+  name = var.environment.k8s_image
+}
+
+
+
 
 # Router
 resource "openstack_networking_router_v2" "router" {
@@ -148,7 +154,7 @@ resource "openstack_compute_instance_v2" "bastian" {
   }
 
   block_device {
-    uuid                  = data.openstack_images_image_v2.image_01.id
+    uuid                  = data.openstack_images_image_v2.image_02.id
     source_type           = "image"
     volume_size           = 300
     boot_index            = 0
@@ -187,7 +193,7 @@ resource "openstack_compute_instance_v2" "master" {
   count             = var.environment.master_nodes
   name              = "${var.environment.prefix}-master-${count.index}"
   flavor_name       = var.environment.master_flavor
-  image_name        = var.environment.image
+  image_name        = var.environment.k8s_image
   key_pair          = openstack_compute_keypair_v2.keypair.name
   availability_zone = var.environment.master_az
   security_groups   = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
@@ -227,7 +233,7 @@ resource "openstack_compute_instance_v2" "worker" {
   count             = var.environment.worker_nodes
   name              = "${var.environment.prefix}-worker-${count.index}"
   flavor_name       = var.environment.worker_flavor
-  image_name        = var.environment.image
+  image_name        = var.environment.k8s_image
   key_pair          = openstack_compute_keypair_v2.keypair.name
   availability_zone = var.environment.worker_az
   security_groups   = [ openstack_networking_secgroup_v2.k8s_secgroup.name ]

@@ -1,5 +1,5 @@
 #!/bin/bash 
-chown -R debian:debian {{ home_dir.stdout }}/deployment
+chown -R ubuntu:ubuntu {{ home_dir.stdout }}/deployment
 
 # Update Ansible inventory file with inventory builder
 cd {{ home_dir.stdout }}/deployment/kubespray

@@ -8,29 +8,29 @@
       path: "{{ item }}"
       state: absent
     loop:
-      - /home/debian/multus-cni
-      - /home/debian/whereabouts
+      - /home/ubuntu/multus-cni
+      - /home/ubuntu/whereabouts
       
   - name: Clone multus-cni repository
     git:
       repo: https://github.com/k8snetworkplumbingwg/multus-cni.git
-      dest: /home/debian/multus-cni
+      dest: /home/ubuntu/multus-cni
       version: release-3.7
       
   - name: Apply multus installation
     shell: |
-      cd /home/debian/multus-cni
+      cd /home/ubuntu/multus-cni
       cat ./images/multus-daemonset.yml | kubectl apply -f -  
   
   - name: Clone whereabouts repository
     git:
       repo: https://github.com/k8snetworkplumbingwg/whereabouts
-      dest: /home/debian/whereabouts
+      dest: /home/ubuntu/whereabouts
       version: v0.6.2
   
   - name: Apply whereabouts installation
     shell: |
-      cd /home/debian/whereabouts
+      cd /home/ubuntu/whereabouts
       kubectl apply \
           -f doc/crds/daemonset-install.yaml \
           -f doc/crds/whereabouts.cni.cncf.io_ippools.yaml \
@@ -41,7 +41,7 @@
       path: "{{ item }}"
       state: absent
     loop:
-      - /home/debian/multus-cni
-      - /home/debian/whereabouts        
+      - /home/ubuntu/multus-cni
+      - /home/ubuntu/whereabouts        
 
 

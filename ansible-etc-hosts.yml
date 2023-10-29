@@ -10,11 +10,17 @@
       loop:
         "{{ all_external }}"
      
-- hosts: ALL
-  user: debian
+- hosts: MASTER, WORKER, BASTIAN
+  user: ubuntu
   become: true
   roles:
     - role: 02-etc-hosts 
+
+- hosts: REGISTRY, NFS
+  user: debian
+  become: true
+  roles:
+    - role: 02-etc-hosts     
 
 
 

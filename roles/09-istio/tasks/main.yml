@@ -4,12 +4,12 @@
 
   - name: Clear directory
     file:
-      path: /home/debian/istio
+      path: /home/ubuntu/istio
       state: absent
  
   - name: Create directory
     file:
-      path: /home/debian/istio
+      path: /home/ubuntu/istio
       state: directory
 
   - name: Delete istio if exists
@@ -19,7 +19,7 @@
   - name: Download istio
     get_url:
       url: https://istio.io/downloadIstio
-      dest: /home/debian/istio
+      dest: /home/ubuntu/istio
     register: apt_res
     retries: 300
     delay: 10
@@ -28,7 +28,7 @@
 
   - name: Run istio script
     shell: |
-      cd /home/debian/istio 
+      cd /home/ubuntu/istio 
       bash downloadIstioCandidate.sh
     register: apt_res
     retries: 300
@@ -38,7 +38,7 @@
   - name: Install istio
     shell: |      
       sleep 120 && kubectl -n kube-system rollout restart deployment coredns&
-      cd /home/debian/istio        
+      cd /home/ubuntu/istio        
       cd `ls | grep istio`
       bin/istioctl install --set profile=demo -y       
     register: apt_res

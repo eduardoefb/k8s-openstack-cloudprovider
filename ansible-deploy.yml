@@ -23,11 +23,19 @@
         path: "{{ playbook_dir }}/files"
         state: directory        
 
-- hosts: ALL
+# Update
+- hosts: NFS, REGISTRY
   user: debian
   become: true
   roles:
     - role: 02-update 
+
+# Update
+- hosts: MASTER, WORKER, BASTIAN
+  user: ubuntu
+  become: true
+  roles:
+    - role: 02-update     
 
 - hosts: REGISTRY
   user: debian
@@ -42,12 +50,12 @@
     - role: 04-nfs     
 
 - hosts: BASTIAN
-  user: debian  
+  user: ubuntu  
   roles:
     - role: 05-k8s-inst  
 
 - hosts: MASTER
-  user: debian
+  user: ubuntu
   run_once: yes
   become: yes
   tasks:
@@ -58,31 +66,31 @@
         flat: yes
 
 - hosts: BASTIAN
-  user: debian
+  user: ubuntu
   tasks:
     - name: Clear kubeconfig
       file:
-        path: /home/debian/.kube/
+        path: /home/ubuntu/.kube/
         state: absent
 
     - name: Create kubeconfig directory
       file:
-        path: /home/debian/.kube/
+        path: /home/ubuntu/.kube/
         state: directory
-        owner: debian
-        group: debian
+        owner: ubuntu
+        group: ubuntu
         mode: '0700'
 
     - name: Send kubeconfig to bastian
       copy:
         src: "{{ playbook_dir }}/files/kubeconfig"        
-        dest: /home/debian/.kube/config
-        owner: debian
-        group: debian
+        dest: /home/ubuntu/.kube/config
+        owner: ubuntu
+        group: ubuntu
         mode: '0700'
 
 - hosts: BASTIAN
-  user: debian
+  user: ubuntu
   roles:
     - role: 06-ingress
     - role: 06-1-multus
