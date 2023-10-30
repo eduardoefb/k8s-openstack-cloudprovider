@@ -1,4 +1,5 @@
 # Define required providers
+
 terraform {
 required_version = ">= 0.14.0"
   required_providers {
@@ -50,6 +51,9 @@ data openstack_images_image_v2 image_02 {
   name = var.environment.k8s_image
 }
 
+data openstack_images_image_v2 image_03 {
+  name = var.environment.bastian_image
+}
 
 
 
@@ -154,7 +158,7 @@ resource "openstack_compute_instance_v2" "bastian" {
   }
 
   block_device {
-    uuid                  = data.openstack_images_image_v2.image_02.id
+    uuid                  = data.openstack_images_image_v2.image_03.id
     source_type           = "image"
     volume_size           = 300
     boot_index            = 0
