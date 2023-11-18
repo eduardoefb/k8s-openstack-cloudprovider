@@ -287,9 +287,9 @@ if [ "${1}" == "-d" ]; then
     terraform destroy --auto-approve
 fi
 
-if ! terraform apply --auto-approve; then 
-    exit 1
-fi
+terraform init || exit 1
+terraform apply --auto-approve || exit 1
+
 
 for f in *.txt; do echo >> $f; done
 sed -i '/^$/d' *.txt

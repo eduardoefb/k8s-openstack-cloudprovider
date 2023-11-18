@@ -1,0 +1,73 @@
+        
+- hosts: localhost
+  tasks:
+
+    - name: Delete directory
+      file: 
+        path: "{{ playbook_dir }}/pcap"
+        state: absent
+    
+    - name: Create directory
+      file: 
+        path: "{{ playbook_dir }}/pcap"
+        state: directory
+
+- hosts: MASTER, WORKER
+  user: debian
+  become: True
+  tasks:
+        
+    - name: Confirm tcpdump is installed
+      apt:
+        name: tcpdump
+    
+    - name: Test
+      shell:
+        sysctl -w net.ipv4.conf.all.proxy_arp=1
+
+    - name: Kill tcpdump
+      shell: |
+        for p in `ps -ef | grep tcpdump | grep -v grep | awk '{print $2}'`; do kill -9 ${p}; done
+      args:
+        executable: /bin/bash
+
+    - name: Delete directory
+      file:
+        path: /tmp/tcpdump
+        state: absent
+
+    - name: Create directory
+      file:
+        path: /tmp/tcpdump
+        state: directory
+
+    - name: Start tcpdump
+      shell: |
+         nohup tcpdump -ni any -s 0 port 14268 -w /tmp/tcpdump/${HOSTNAME}.pcap &
+      args:
+        executable: /bin/bash
+    
+    - name: wait
+      ansible.builtin.pause:
+       minutes: 6000
+      
+    - name: Stop tcpdump
+      shell: |
+        for p in `ps -ef | grep tcpdump | grep -v grep | awk '{print $2}'`; do kill -SIGINT ${p}; done        
+      args:
+        executable: /bin/bash
+
+    - name: Wait
+      ansible.builtin.pause:
+       seconds: 1
+    
+    - name: Get hostname
+      shell: hostname
+      register: hname
+    
+    - name: Get files
+      fetch:
+        src: /tmp/tcpdump/{{ hname.stdout }}.pcap
+        dest: "{{ playbook_dir }}/pcap/{{ hname.stdout }}.pcap"
+        flat: yes
+

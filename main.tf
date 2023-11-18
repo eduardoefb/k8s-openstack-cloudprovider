@@ -4,7 +4,7 @@ required_version = ">= 0.14.0"
   required_providers {
     openstack = {
       source  = "terraform-provider-openstack/openstack"
-      version = "~> 1.51.1"
+      version = "~> 1.53.0"
     }
   }
 }
@@ -46,6 +46,9 @@ data openstack_images_image_v2 image_01 {
   name = var.environment.image
 }
 
+data openstack_images_image_v2 image_02 {
+  name = var.environment.k8s_image
+}
 
 # Router
 resource "openstack_networking_router_v2" "router" {
@@ -79,7 +82,7 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_tcp" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
-  port_range_min    = 22
+  port_range_min    = 1
   port_range_max    = 65535
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = "${openstack_networking_secgroup_v2.k8s_secgroup.id}"
@@ -96,7 +99,7 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_udp" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "udp"
-  port_range_min    = 22
+  port_range_min    = 1
   port_range_max    = 65535
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = "${openstack_networking_secgroup_v2.k8s_secgroup.id}"
@@ -106,7 +109,7 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_udp_out" {
   direction         = "egress"
   ethertype         = "IPv4"
   protocol          = "udp"
-  port_range_min    = 22
+  port_range_min    = 1
   port_range_max    = 65535
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = "${openstack_networking_secgroup_v2.k8s_secgroup.id}"
@@ -116,8 +119,8 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_sctp" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "sctp"
-  port_range_min    = "38412"
-  port_range_max    = "38412"
+  port_range_min    = "1"
+  port_range_max    = "65535"
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = "${openstack_networking_secgroup_v2.k8s_secgroup.id}"
 }
@@ -126,8 +129,8 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_sctp2" {
   direction         = "egress"
   ethertype         = "IPv4"
   protocol          = "sctp"
-  port_range_min    = "38412"
-  port_range_max    = "38412"
+  port_range_min    = "1"
+  port_range_max    = "65535"
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = "${openstack_networking_secgroup_v2.k8s_secgroup.id}"
 }
@@ -141,20 +144,25 @@ resource "openstack_compute_instance_v2" "bastian" {
   flavor_name       = var.environment.bastian_flavor  
   key_pair          = openstack_compute_keypair_v2.keypair.name
   availability_zone = var.environment.bastian_az
-      
+  image_name        = var.environment.image
   security_groups   = [ openstack_networking_secgroup_v2.k8s_secgroup.name ]
   network {
     name = openstack_networking_network_v2.network.name
   }
 
+  /*
   block_device {
     uuid                  = data.openstack_images_image_v2.image_01.id
     source_type           = "image"
-    volume_size           = 300
+    volume_size           = 180
     boot_index            = 0
     destination_type      = "volume"
     delete_on_termination = true
   } 
+
+  */
+  
+ 
 
   depends_on = [
     openstack_lb_loadbalancer_v2.lb,
@@ -187,7 +195,7 @@ resource "openstack_compute_instance_v2" "master" {
   count             = var.environment.master_nodes
   name              = "${var.environment.prefix}-master-${count.index}"
   flavor_name       = var.environment.master_flavor
-  image_name        = var.environment.image
+  image_name        = var.environment.k8s_image
   key_pair          = openstack_compute_keypair_v2.keypair.name
   availability_zone = var.environment.master_az
   security_groups   = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
@@ -227,7 +235,7 @@ resource "openstack_compute_instance_v2" "worker" {
   count             = var.environment.worker_nodes
   name              = "${var.environment.prefix}-worker-${count.index}"
   flavor_name       = var.environment.worker_flavor
-  image_name        = var.environment.image
+  image_name        = var.environment.k8s_image
   key_pair          = openstack_compute_keypair_v2.keypair.name
   availability_zone = var.environment.worker_az
   security_groups   = [ openstack_networking_secgroup_v2.k8s_secgroup.name ]
@@ -320,7 +328,7 @@ resource "openstack_compute_instance_v2" "nfs" {
   count             = var.environment.nfs_nodes
   name              = "${var.environment.prefix}-nfs-${count.index}"
   flavor_name       = var.environment.nfs_flavor
-  # image_name      = var.environment.image
+  image_name      = var.environment.image
   availability_zone = var.environment.nfs_az
   security_groups   = [ openstack_networking_secgroup_v2.k8s_secgroup.name  ]
   key_pair          = openstack_compute_keypair_v2.keypair.name
@@ -328,6 +336,7 @@ resource "openstack_compute_instance_v2" "nfs" {
     name = openstack_networking_network_v2.network.name
   }
   
+  /*
   block_device {
     uuid                  = data.openstack_images_image_v2.image_01.id
     source_type           = "image"
@@ -335,7 +344,9 @@ resource "openstack_compute_instance_v2" "nfs" {
     boot_index            = 0
     destination_type      = "volume"
     delete_on_termination = true
-  }
+  } 
+
+  */
 
   depends_on = [
     openstack_lb_loadbalancer_v2.lb,

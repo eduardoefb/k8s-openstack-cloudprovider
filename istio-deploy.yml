@@ -1,0 +1,6 @@
+- hosts: BASTIAN
+  user: debian
+  roles:
+    - role: 09-istio
+      
+      
