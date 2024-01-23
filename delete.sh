@@ -17,6 +17,6 @@ else
 fi 
 
 
-if terraform destroy --auto-approve; then 
+if tofu destroy --auto-approve; then 
     mv variables.tf variables.tf.removed
 fi

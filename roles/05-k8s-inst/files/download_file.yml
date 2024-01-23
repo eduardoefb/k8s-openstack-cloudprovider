@@ -75,10 +75,16 @@
     ignore_errors: true
 
   # Ansible 2.9 requires we convert a generator to a list
+  #- name: download_file | Get the list of working mirrors
+  #  set_fact:
+  #    valid_mirror_urls: "{{ uri_result.results | selectattr('failed', 'eq', False) | map(attribute='mirror') | list }}"
+  #  delegate_to: "{{ download_delegate if download_force_cache else inventory_hostname }}"
+
   - name: download_file | Get the list of working mirrors
     set_fact:
-      valid_mirror_urls: "{{ uri_result.results | selectattr('failed', 'eq', False) | map(attribute='mirror') | list }}"
+      valid_mirror_urls: "{{ uri_result.results | map(attribute='mirror') | list }}"
     delegate_to: "{{ download_delegate if download_force_cache else inventory_hostname }}"
+
 
   # This must always be called, to check if the checksum matches. On no-match the file is re-downloaded.
   # This task will avoid logging it's parameters to not leak environment passwords in the log

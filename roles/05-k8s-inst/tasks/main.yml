@@ -13,6 +13,10 @@
         - gnupg
         - software-properties-common
         - wget
+        - golang
+        - zip
+        - unzip
+        - jq
         
   - name: Create the openstack environment variables
     template:
@@ -104,10 +108,11 @@
     pip:
       requirements: "{{ home_dir.stdout }}/deployment/kubespray/requirements.txt"
     register: apt_res
-    retries: 300
+    retries: 3
     delay: 10
     until: apt_res is success  
-
+  
+  
   - name: Delete ssh key
     file:
       path:  "{{ home_dir.stdout }}/.ssh/id_rsa"

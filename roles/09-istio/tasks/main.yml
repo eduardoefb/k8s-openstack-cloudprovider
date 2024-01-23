@@ -48,10 +48,11 @@
 
   - name: Kiali, prometheus, grafana, jeagger
     shell: |
-      kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.16/samples/addons/kiali.yaml
-      kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.16/samples/addons/prometheus.yaml
-      kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.16/samples/addons/grafana.yaml
-      kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.16/samples/addons/jaeger.yaml
+      istio_version=`ls -ltr ~/istio/ | grep --color -oP '(?<=istio-)(\d+\.\d+)'`
+      kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-${istio_version}/samples/addons/kiali.yaml
+      kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-${istio_version}/samples/addons/prometheus.yaml
+      kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-${istio_version}/samples/addons/grafana.yaml
+      kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-${istio_version}/samples/addons/jaeger.yaml
         
     register: apt_res
     retries: 300

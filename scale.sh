@@ -230,7 +230,7 @@ if [ "${1}" == "-d" ]; then
     delete_script=`mktemp`
     kubectl get services -A | grep LoadBalancer | awk '{print "kubectl -n "$1" delete service "$2}' > ${delete_script}
     bash ${delete_script}
-    terraform destroy --auto-approve
+    tofu destroy --auto-approve
 fi
 
 # Check k8s connection:
@@ -241,7 +241,7 @@ fi
 
 actual_worker_nodes=`kubectl get nodes -o custom-columns=NAME:.metadata.name | grep -P '\w+-worker-\d+' | grep -v "^NAME"  | wc -l`
 
-# Replace the number of worker nodes in the terraform variables.tf file:
+# Replace the number of worker nodes in the tofu  variables.tf file:
 sed -i -E "s/worker_nodes[[:space:]]*=[[:space:]]*\"[0-9]+\",/worker_nodes         = \"${1}\",/"  variables.tf
 
 
@@ -256,7 +256,7 @@ if [ ${scale} -lt ${actual_worker_nodes} ]; then
     done
 fi
 
-terraform apply --auto-approve
+tofu apply --auto-approve
 for f in *.txt; do echo >> $f; done
 sed -i '/^$/d' *.txt
 

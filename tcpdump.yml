@@ -19,11 +19,7 @@
         
     - name: Confirm tcpdump is installed
       apt:
-        name: tcpdump
-    
-    - name: Test
-      shell:
-        sysctl -w net.ipv4.conf.all.proxy_arp=1
+        name: tcpdump    
 
     - name: Kill tcpdump
       shell: |
@@ -43,7 +39,8 @@
 
     - name: Start tcpdump
       shell: |
-         nohup tcpdump -ni any -s 0 port 14268 -w /tmp/tcpdump/${HOSTNAME}.pcap &
+         nohup tcpdump -ni any -s 0 -w /tmp/tcpdump/${HOSTNAME}.pcap &
+         #nohup tcpdump -ni any -s 0 port 443 or port 8080 or port 9090 or port 38412 or sctp -w /tmp/tcpdump/${HOSTNAME}.pcap &
       args:
         executable: /bin/bash
     

@@ -284,11 +284,11 @@ if [ "${1}" == "-d" ]; then
     delete_script=`mktemp`
     kubectl get services -A | grep LoadBalancer | awk '{print "kubectl -n "$1" delete service "$2}' > ${delete_script}
     bash ${delete_script}
-    terraform destroy --auto-approve
+    tofu destroy --auto-approve
 fi
 
-terraform init || exit 1
-terraform apply --auto-approve || exit 1
+tofu init || exit 1
+tofu apply --auto-approve || exit 1
 
 
 for f in *.txt; do echo >> $f; done
