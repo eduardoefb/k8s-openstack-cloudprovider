@@ -28,7 +28,7 @@ kubectl delete node <prefix>-worker-0
 ```
 And than, redeploy the worker node using terraform apply --replace command (example for worker-0):
 ```shell
-terraform apply --replace openstack_compute_instance_v2.worker[0]
+tofu apply --replace openstack_compute_instance_v2.worker[11]
 ```
 
 And last, execute the scale script with the current number of desired worker nodes:
